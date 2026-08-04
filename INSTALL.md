@@ -1,114 +1,66 @@
-# System Install Checklist
+# Development setup inventory
 
-These dotfiles currently include:
+This is a record of the development-related software installed on this Ubuntu 24.04 machine, refreshed on 2026-08-04. Package names below are the installed Debian/Ubuntu package names unless noted otherwise.
 
-- `~/.tmux.conf`
-- `~/.config/hypr/hyprland.conf`
-- `~/.config/hypr/hyprpaper.conf`
-- `~/.config/nvim`
+## Editors and terminal workflow
 
-## Base desktop
+- `neovim` (installed separately at `/usr/local/bin/nvim`), `vim`
+- `tmux`, `zsh`, `zplug`, `zsh-autosuggestions`, `zsh-syntax-highlighting`
+- `git`, `git-email`, `gh`, `mercurial`
+- `curl`, `wget`, `ripgrep`, `fzf`, `zoxide`, `eza`, `jq`, `tree`, `btop`, `fastfetch`
 
-Required for the Hyprland config:
+## C and C++ toolchain
 
-- `hyprland`
-- `waybar`
-- `hyprpaper`
-- `wl-clipboard`
-- `grim`
-- `slurp`
-- `rofi`
-- `alacritty`
-- `thunar`
-- `systemd` / `loginctl`
+- `build-essential`, `gcc`, `g++`, `make`, `cmake`, `cmake-extras`, `ninja-build`, `meson`, `ccache`
+- `clang`, `clang-21`, `clangd`, `clangd-21`, `clang-format`, `clang-tidy`
+- `llvm`, `lld`, `lld-21`, `lldb`, `valgrind`, `gdb`, `cppcheck`, `doxygen`, `lcov`
+- `bison`, `flex`, `nasm`, `yasm`, `glslang-tools`, `vulkan-validationlayers`
 
-The wallpaper config expects this file:
+## Language runtimes and SDKs
 
-```bash
-~/wallpapers/wall.jpg
-```
+- JavaScript/TypeScript: `node`/`npm`/`npx` (managed with NVM), `pnpm`, `yarn`, `node-typescript`; `bun` and `deno` are not currently installed.
+- Python: `python3`, `python3-pip`, `python3.12-venv`, `uv`.
+- Go: `golang`.
+- Rust: `rustup`, `cargo`, `rustc`.
+- Java: `openjdk-17-jdk`.
+- Other available runtimes: `ruby`, `perl`, `lua`.
 
-## Terminal and shell tools
+## Containers, cloud, and infrastructure
 
-Required or expected for the dev setup:
+- Docker: `docker-ce`, `docker-ce-cli`, `containerd.io`, `docker-buildx-plugin`, `docker-compose-plugin`.
+- Kubernetes: `kubectl` (installed outside APT).
+- Cloud tooling: `azure-cli`, `cloudflared`, `wrangler`.
 
-- `zsh`
-- `tmux`
-- `git`
-- `curl`
-- `wget`
-- `unzip`
-- `ripgrep`
-- `zoxide`
-- `fzf`
-- `fd` / `fd-find`
-- `bat` / `batcat`
-- `eza`
-- `jq`
+## Databases and services
 
-## Neovim
+- `postgresql`, `postgresql-contrib`, `pgadmin4-desktop`
+- `mongodb-org`, `mongodb-compass`
+- `redis`
 
-Required for the Neovim/NvChad config:
+## AI and coding assistants
 
-- `neovim` 0.10 or newer
-- `git`
-- `ripgrep`
-- `unzip`
-- `tar`
-- `gzip`
-- `make`
-- `gcc`
-- `g++`
-- `nodejs`
-- `npm`
-- `python3`
-- `python3-pip`
+- `codex`, `claude`, `ollama`, `antigravity`, `opencode`.
 
-Language and formatter tools referenced by the config:
+## Desktop tools used by these dotfiles
 
-- `clangd`
-- `stylua`
-- `vscode-langservers-extracted`
+- Window manager and status: `i3`, `i3-wm`, `i3lock`, `i3status`, `picom`, `polybar`.
+- Terminal and launcher: `alacritty`, `kitty`, `rofi`, `dmenu` (via `suckless-tools`).
+- Utilities: `flameshot`, `grim`, `slurp`, `cliphist`, `xclip`, `brightnessctl`, `playerctl`, `pamixer`, `pavucontrol`, `nitrogen`, `thunar-archive-plugin`.
+- Fonts: `fonts-firacode`, `fonts-font-awesome`, `fonts-jetbrains-mono`.
 
-Useful optional tools:
+## Install notes
 
-- `tree-sitter-cli`
-- `cargo` / `rustup`
-- `nvm`
-- `pnpm`
-- `bun`
+APT packages can be installed with `sudo apt install <package...>`. Software installed outside APT is intentionally called out above because its installation method may vary (for example NVM, Rustup, npm, Cargo, or a standalone binary).
 
-## Ubuntu install example
+## Dotfiles in this repository
 
-```bash
-sudo apt update
-sudo apt install -y \
-  hyprland waybar wl-clipboard grim slurp rofi alacritty thunar \
-  zsh tmux git curl wget unzip ripgrep fzf zoxide fd-find bat jq eza \
-  build-essential clangd nodejs npm python3 python3-pip
-```
+The configuration backups mirror their home-directory locations:
 
-Install Neovim 0.10 or newer from the official Neovim release, PPA, or your preferred package source if Ubuntu's package is too old.
-
-Install formatter and language-server extras:
-
-```bash
-cargo install stylua
-npm install -g vscode-langservers-extracted
-```
-
-## Restore paths
-
-From this repo, place or symlink files to:
-
-```bash
-~/.tmux.conf
-~/.config/hypr/
-~/.config/nvim/
-```
-
-After restoring Hyprland files, reload inside a running Hyprland session:
-
-```bash
-hyprctl reload
+```text
+.config/nvim/    -> ~/.config/nvim/
+.config/i3/      -> ~/.config/i3/
+.vim/            -> ~/.vim/
+.vimrc           -> ~/.vimrc
+.tmux.conf        -> ~/.tmux.conf
+.i3status.conf    -> ~/.i3status.conf
 ```
