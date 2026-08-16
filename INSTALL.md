@@ -1,66 +1,73 @@
-# Development setup inventory
+# Install notes
 
-This is a record of the development-related software installed on this Ubuntu 24.04 machine, refreshed on 2026-08-04. Package names below are the installed Debian/Ubuntu package names unless noted otherwise.
+## Neovim + tmux (current)
 
-## Editors and terminal workflow
+See **[NVIM_TMUX.md](NVIM_TMUX.md)** for the full guide.
 
-- `neovim` (installed separately at `/usr/local/bin/nvim`), `vim`
-- `tmux`, `zsh`, `zplug`, `zsh-autosuggestions`, `zsh-syntax-highlighting`
-- `git`, `git-email`, `gh`, `mercurial`
-- `curl`, `wget`, `ripgrep`, `fzf`, `zoxide`, `eza`, `jq`, `tree`, `btop`, `fastfetch`
+### Symlinks
 
-## C and C++ toolchain
+```bash
+ln -sfn "$PWD/.config/nvim" ~/.config/nvim
+mkdir -p ~/.config/tmux
+ln -sfn "$PWD/.config/tmux/tmux.conf" ~/.config/tmux/tmux.conf
+ln -sfn "$PWD/.tmux.conf" ~/.tmux.conf
+```
 
-- `build-essential`, `gcc`, `g++`, `make`, `cmake`, `cmake-extras`, `ninja-build`, `meson`, `ccache`
-- `clang`, `clang-21`, `clangd`, `clangd-21`, `clang-format`, `clang-tidy`
-- `llvm`, `lld`, `lld-21`, `lldb`, `valgrind`, `gdb`, `cppcheck`, `doxygen`, `lcov`
-- `bison`, `flex`, `nasm`, `yasm`, `glslang-tools`, `vulkan-validationlayers`
+### Requirements
 
-## Language runtimes and SDKs
+- Neovim 0.11+ (LazyVim)
+- `git`, `curl`, C compiler (Treesitter)
+- `tmux` 3.x
+- Optional tools used by this config:
+  - `clangd`, `gcc` / `clang` (C++ / asm diagnostics)
+  - Node.js (TypeScript tooling, Mason packages)
+  - DB clients as needed (`psql`, `mysql`, …) for Dadbod
 
-- JavaScript/TypeScript: `node`/`npm`/`npx` (managed with NVM), `pnpm`, `yarn`, `node-typescript`; `bun` and `deno` are not currently installed.
-- Python: `python3`, `python3-pip`, `python3.12-venv`, `uv`.
-- Go: `golang`.
-- Rust: `rustup`, `cargo`, `rustc`.
-- Java: `openjdk-17-jdk`.
-- Other available runtimes: `ruby`, `perl`, `lua`.
+### Tmux plugins (TPM)
 
-## Containers, cloud, and infrastructure
+```bash
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+```
 
-- Docker: `docker-ce`, `docker-ce-cli`, `containerd.io`, `docker-buildx-plugin`, `docker-compose-plugin`.
-- Kubernetes: `kubectl` (installed outside APT).
-- Cloud tooling: `azure-cli`, `cloudflared`, `wrangler`.
+Inside tmux: `Ctrl-Space` then `I` to install (`tmux-resurrect`).
 
-## Databases and services
+Or clone manually:
 
-- `postgresql`, `postgresql-contrib`, `pgadmin4-desktop`
-- `mongodb-org`, `mongodb-compass`
-- `redis`
+```bash
+git clone https://github.com/tmux-plugins/tmux-resurrect ~/.tmux/plugins/tmux-resurrect
+```
 
-## AI and coding assistants
+### GNU Assembly LSP (optional)
 
-- `codex`, `claude`, `ollama`, `antigravity`, `opencode`.
+```bash
+mkdir -p ~/.config/asm-lsp
+```
 
-## Desktop tools used by these dotfiles
+Put a `.asm-lsp.toml` there with `assembler = "gas"` — example in `NVIM_TMUX.md`.
 
-- Window manager and status: `i3`, `i3-wm`, `i3lock`, `i3status`, `picom`, `polybar`.
-- Terminal and launcher: `alacritty`, `kitty`, `rofi`, `dmenu` (via `suckless-tools`).
-- Utilities: `flameshot`, `grim`, `slurp`, `cliphist`, `xclip`, `brightnessctl`, `playerctl`, `pamixer`, `pavucontrol`, `nitrogen`, `thunar-archive-plugin`.
-- Fonts: `fonts-firacode`, `fonts-font-awesome`, `fonts-jetbrains-mono`.
+### Database secrets (optional)
 
-## Install notes
+```bash
+cp .config/nvim/lua/config/db-secrets.example.lua \
+   ~/.config/nvim/lua/config/db-secrets.lua
+# edit URLs — file is gitignored
+```
 
-APT packages can be installed with `sudo apt install <package...>`. Software installed outside APT is intentionally called out above because its installation method may vary (for example NVM, Rustup, npm, Cargo, or a standalone binary).
+### Omarchy note
 
-## Dotfiles in this repository
+If you use Omarchy: avoid `omarchy-refresh-tmux` / `omarchy refresh nvim`-style resets unless you intend to wipe these custom configs. Theme symlink for `theme.lua` may differ on Omarchy live systems; this repo stores a concrete matteblack theme file.
 
-The configuration backups mirror their home-directory locations:
+---
+
+## Older inventory (historical)
+
+Previously this file listed packages from an Ubuntu 24.04 machine (i3, etc.). That list is outdated relative to the current Omarchy/Arch + LazyVim setup. Prefer the guide above for Neovim/tmux.
+
+### Legacy paths still in the repo
 
 ```text
-.config/nvim/    -> ~/.config/nvim/
-.config/i3/      -> ~/.config/i3/
-.vim/            -> ~/.vim/
-.vimrc           -> ~/.vimrc
-.tmux.conf        -> ~/.tmux.conf
+.config/i3/       -> ~/.config/i3/
+.vim/             -> ~/.vim/
+.vimrc            -> ~/.vimrc
 .i3status.conf    -> ~/.i3status.conf
 ```
