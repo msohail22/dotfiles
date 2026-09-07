@@ -5,7 +5,7 @@ Personal development configs — currently focused on **Neovim (LazyVim)** and *
 ## What's here
 
 | Path | Description |
-| [`.config/git/config`](.config/git/config) | Git defaults, including Delta's side-by-side `git diff` view |
+| [`.config/git/config`](.config/git/config) | Git defaults, including a matteblack-themed Delta side-by-side `git diff` view |
 |------|-------------|
 | [`.config/nvim/`](.config/nvim/) | LazyVim Neovim config (C++, TS/React, asm, SQL, DAP, CP, …) |
 | [`.config/tmux/tmux.conf`](.config/tmux/tmux.conf) | Tmux config + resurrect |
