@@ -5,6 +5,7 @@ Personal development configs — currently focused on **Neovim (LazyVim)** and *
 ## What's here
 
 | Path | Description |
+| [`.config/git/config`](.config/git/config) | Git defaults, including Delta's side-by-side `git diff` view |
 |------|-------------|
 | [`.config/nvim/`](.config/nvim/) | LazyVim Neovim config (C++, TS/React, asm, SQL, DAP, CP, …) |
 | [`.config/tmux/tmux.conf`](.config/tmux/tmux.conf) | Tmux config + resurrect |
@@ -20,6 +21,8 @@ git clone https://github.com/msohail22/dotfiles.git ~/Github/dotfiles
 cd ~/Github/dotfiles
 
 ln -sfn "$PWD/.config/nvim" ~/.config/nvim
+mkdir -p ~/.config/git
+ln -sfn "$PWD/.config/git/config" ~/.config/git/config
 mkdir -p ~/.config/tmux
 ln -sfn "$PWD/.config/tmux/tmux.conf" ~/.config/tmux/tmux.conf
 ln -sfn "$PWD/.tmux.conf" ~/.tmux.conf
@@ -30,6 +33,8 @@ git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 ```
 
 Then open `nvim` once and let Mason install LSPs.
+
+For the side-by-side diff view, install [`git-delta`](https://github.com/dandavison/delta) (on Arch: `sudo pacman -S git-delta`).
 
 ## Documentation
 

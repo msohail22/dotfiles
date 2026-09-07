@@ -1,0 +1,89 @@
+# See https://git-scm.com/docs/git-config
+
+[alias]
+	co = checkout
+	br = branch
+	ci = commit
+	st = status
+
+[init]
+	defaultBranch = master
+
+[pull]
+	rebase = true
+
+[push]
+	autoSetupRemote = true
+
+[core]
+	pager = delta
+
+[interactive]
+	diffFilter = delta --color-only
+
+[diff]
+	algorithm = histogram
+	colorMoved = plain
+	mnemonicPrefix = true
+	tool = nvimdiff
+
+[delta]
+	navigate = true
+	side-by-side = true
+	line-numbers = true
+	features = decorations
+
+[delta "decorations"]
+	commit-decoration-style = bold yellow box ul
+	file-style = bold yellow ul
+	file-decoration-style = none
+	hunk-header-decoration-style = blue box
+
+[commit]
+	verbose = true
+
+[column]
+	ui = auto
+
+[branch]
+	sort = -committerdate
+
+[tag]
+	sort = -version:refname
+
+[rerere]
+	enabled = true
+	autoupdate = true
+
+[user]
+	name = Mohammed Sohail
+	email = mohd.sohail.biz@gmail.com
+
+[credential "https://github.com"]
+	helper =
+	helper = !/usr/bin/gh auth git-credential
+
+[credential "https://gist.github.com"]
+	helper =
+	helper = !/usr/bin/gh auth git-credential
+
+[difftool "nvimdiff"]
+	cmd = nvim -d \"$LOCAL\" \"$REMOTE\"
+
+[difftool "vimdiff"]
+	cmd = vim -d \"$LOCAL\" \"$REMOTE\"
+
+[difftool]
+	prompt = true
+
+[merge]
+	tool = nvimdiff
+
+[mergetool "nvimdiff"]
+	cmd = nvim -d \"$LOCAL\" \"$REMOTE\" \"$MERGED\" -c \"wincmd w\" -c \"wincmd J\"
+
+[mergetool "vimdiff"]
+	cmd = vim -d \"$LOCAL\" \"$REMOTE\" \"$MERGED\" -c \"wincmd w\" -c \"wincmd J\"
+
+[mergetool]
+	keepBackup = false

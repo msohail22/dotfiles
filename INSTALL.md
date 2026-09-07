@@ -7,10 +7,20 @@ See **[NVIM_TMUX.md](NVIM_TMUX.md)** for the full guide.
 ### Symlinks
 
 ```bash
+mkdir -p ~/.config/git
+ln -sfn "$PWD/.config/git/config" ~/.config/git/config
 ln -sfn "$PWD/.config/nvim" ~/.config/nvim
 mkdir -p ~/.config/tmux
 ln -sfn "$PWD/.config/tmux/tmux.conf" ~/.config/tmux/tmux.conf
 ln -sfn "$PWD/.tmux.conf" ~/.tmux.conf
+```
+
+### Git diffs
+
+The Git config uses [Delta](https://github.com/dandavison/delta) for a syntax-highlighted, line-numbered side-by-side diff. On Arch:
+
+```bash
+sudo pacman -S git-delta
 ```
 
 ### Requirements
