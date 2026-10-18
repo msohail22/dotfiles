@@ -9,6 +9,10 @@ Use the modern CLI tools, not the classic ones: `rg`, `fd`, `ast-grep`, `sd`, `j
 `yq`, `mlr`, `bat --plain`, `eza --tree`, `difft`, `xh`, `gh`, `just`, `uv`, `pnpm`,
 `hyperfine`, `tokei`, `dust`, `duf`, `procs`, `watchexec`, `tldr`.
 
+Navigate with `zoxide`, never `cd`. The `z` function exists only in his interactive
+shell, so from a non-interactive agent shell call the binary:
+`cd "$(zoxide query <term>)"`. `zoxide query -l <term>` lists all matches.
+
 Never run an interactive tool — `fzf`, `htop`, `top`, `less`, `vim`, `nvim`, `man` wait
 for a key press and hang the agent. Disable pagers (`git --no-pager`, `PAGER=cat`).
 

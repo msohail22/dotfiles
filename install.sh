@@ -41,10 +41,6 @@ fi
 
 echo
 echo "== left to do by hand =="
-echo "Create the secrets file, which is NOT in this repository:"
-echo "  mkdir -p ~/.config/claude-code"
-echo "  chmod 700 ~/.config/claude-code"
-echo "  echo 'export GROQ_API_KEY=...' >> ~/.config/claude-code/providers.env"
-echo "  chmod 600 ~/.config/claude-code/providers.env"
+echo "Log in to GitHub so git needs no SSH passphrase:  gh auth login"
 echo "Install plugins from inside Claude Code with:  /plugin"
 echo "See claude/MANIFEST.md for the full inventory."

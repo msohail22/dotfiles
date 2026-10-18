@@ -91,6 +91,7 @@ Use modern command line tools instead of the classic ones:
 | Processes | `procs` | `ps` |
 | Rerun on change | `watchexec` | manual reruns |
 | Short help | `tldr` | `man` |
+| Change directory | `z` (zoxide) | `cd` |
 
 Rules for tools:
 
@@ -100,11 +101,12 @@ Rules for tools:
 - Prefer machine-readable output. Use `--json` when a tool has it.
 - Check unfamiliar syntax with `tldr <tool>` before you guess.
 - `make` is still correct for a real build.
-- Do not use `zoxide` (`z`). It is installed and initialised in `~/.zshrc`, but it is an
-  interactive tool for a human. Each agent command runs in a new non-interactive shell,
-  which does not load the `z` function, and the `z` database holds the directories
-  **he** visited, not a path the agent can trust. The agent always uses the full
-  absolute path instead. `zoxide` stays his, for his own prompt.
+- Navigate with `zoxide`, not `cd`. The `z` function only exists in his interactive
+  shell, and an agent command runs in a new non-interactive shell that does not load
+  `~/.zshrc`. So the agent calls the binary: `cd "$(zoxide query dotfiles)"`.
+  `zoxide query <term>` prints the best-matching directory he has visited, and
+  `zoxide query -l <term>` lists all matches. Check the match is the intended
+  directory before using it, because the database ranks by his visit history.
 
 ## Git commands
 
