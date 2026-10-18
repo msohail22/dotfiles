@@ -1,0 +1,7 @@
+- [Git write commands are his to run](git-write-commands-are-users-to-run.md) — never run git add/commit/push; hand over the commands.
+- [Modern git: switch and restore](modern-git-commands-switch-restore.md) — never git checkout.
+- [Read the docs before acting](read-docs-before-acting.md) — no working from memory; docs beat recall.
+- [No Claude attribution in commits](no-claude-attribution-in-commits.md) — attribution:false; the code is his.
+- [Explain by teaching, with diagrams](explain-by-teaching-with-diagrams.md) — assume zero knowledge, ASD-STE100, ASCII flow charts.
+- [Modern CLI tools over classic](modern-cli-tools-over-classic.md) — rg/fd/sd/jq/bat/eza; never interactive tools.
+- [Dotfiles is the source of truth](dotfiles-is-source-of-truth.md) — ~/.claude and tmux.conf are symlinks into ~/Github/dotfiles.

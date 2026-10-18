@@ -1,52 +1,36 @@
 # dotfiles
 
-Personal development configs — currently focused on **Neovim (LazyVim)** and **tmux** from an Omarchy/Arch setup.
+Configuration for Arch / Omarchy. Two things live here:
 
-## What's here
+| Path in repository | Symlinked to | What it is |
+|---|---|---|
+| `.config/tmux/tmux.conf` | `~/.config/tmux/tmux.conf` | tmux configuration |
+| `claude/` | `~/.claude` | Claude Code configuration (whole folder) |
+| `.zshrc` | `~/.zshrc` | zsh configuration |
 
-| Path | Description |
-| [`.config/git/config`](.config/git/config) | Git defaults, including a matteblack-themed Delta side-by-side `git diff` view |
-|------|-------------|
-| [`.config/nvim/`](.config/nvim/) | LazyVim Neovim config (C++, TS/React, asm, SQL, DAP, CP, …) |
-| [`.config/tmux/tmux.conf`](.config/tmux/tmux.conf) | Tmux config + resurrect |
-| [`.tmux.conf`](.tmux.conf) | Stub that sources the XDG tmux config |
-| [`NVIM_TMUX.md`](NVIM_TMUX.md) | **Full guide** — every keybinding & workflow |
-| [`INSTALL.md`](INSTALL.md) | Install / inventory notes |
-| [`.config/i3/`](.config/i3/), [`.vimrc`](.vimrc), … | Older i3/Vim leftovers (optional) |
+## Rule
 
-## Quick install
+Edit the files **in this repository**. Never edit through `~/.claude` or
+`~/.config/tmux`. Those paths are symlinks into this repository, so a change through
+them edits the same bytes, but the repository is the source of truth and the place that
+gets committed.
 
-```bash
-git clone https://github.com/msohail22/dotfiles.git ~/Github/dotfiles
-cd ~/Github/dotfiles
+## New machine
 
-ln -sfn "$PWD/.config/nvim" ~/.config/nvim
-mkdir -p ~/.config/git
-ln -sfn "$PWD/.config/git/config" ~/.config/git/config
-mkdir -p ~/.config/tmux
-ln -sfn "$PWD/.config/tmux/tmux.conf" ~/.config/tmux/tmux.conf
-ln -sfn "$PWD/.tmux.conf" ~/.tmux.conf
+    git clone git@github.com:msohail22/dotfiles.git ~/Github/dotfiles
+    cd ~/Github/dotfiles
+    ./install.sh
 
-# tmux plugins
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-# open tmux → prefix (Ctrl-Space) then I
-```
+`install.sh` creates the symlinks and installs the command line tools. Then read
+`claude/MANIFEST.md` for the plugins, which must be installed by hand from inside
+Claude Code.
 
-Then open `nvim` once and let Mason install LSPs.
+## What is NOT in here
 
-For the side-by-side diff view, install [`git-delta`](https://github.com/dandavison/delta) (on Arch: `sudo pacman -S git-delta`).
+Secrets and machine state are gitignored: `claude/.credentials.json`,
+`claude/history.jsonl`, `claude/projects/`, `claude/plugins/`, `claude/skills/synced/`
+and the caches. See `claude/.gitignore`.
 
-## Documentation
-
-→ **[NVIM_TMUX.md](NVIM_TMUX.md)** — full encyclopedia (~2200+ lines): install, Vim grammar, LazyVim, LSP, DAP, Dadbod, CP, tmux, workflows, drills, runbooks, cheatsheets.
-
-## Secrets
-
-Never commit DB passwords. Copy:
-
-```bash
-cp ~/.config/nvim/lua/config/db-secrets.example.lua \
-   ~/.config/nvim/lua/config/db-secrets.lua
-```
-
-(`db-secrets.lua` is gitignored.)
+API keys are never in `.zshrc`. They live in `~/.config/claude-code/providers.env`,
+which is outside this repository and has mode 600. `.zshrc` only sources it if it
+exists, so a machine without the file still starts a working shell.

@@ -1,0 +1,26 @@
+# Claude Code writes many files into this folder, and some hold secrets or keys.
+# So this file works the other way round: ignore EVERYTHING, then allow back only the
+# few files that belong in the repository. A new Claude Code version can add a new
+# secret file, and that file stays ignored by default.
+
+*
+!.gitignore
+!CLAUDE.md
+!MANIFEST.md
+!settings.json
+
+# Hand-installed skills (the account-synced ones stay ignored)
+!skills/
+skills/*
+!skills/asd-ste100/
+!skills/llm-council/
+!skills/asd-ste100/**
+!skills/llm-council/**
+
+# Memory: the rule files, but NOT the conversation transcripts next to them
+!projects/
+projects/*
+!projects/-home-msohail22/
+projects/-home-msohail22/*
+!projects/-home-msohail22/memory/
+!projects/-home-msohail22/memory/**
