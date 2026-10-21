@@ -17,16 +17,28 @@ Update one with:
 
 ## Plugins (NOT tracked: `plugins/` is gitignored)
 
-Install each one from inside Claude Code. The command is typed by the user; an agent
-cannot run it.
+`enabledPlugins` and `extraKnownMarketplaces` in `settings.json` ARE tracked, so a new
+machine already knows which plugins to turn on. The plugin code itself is not, because
+`plugins/` is gitignored, so each one still has to be fetched once.
 
-| Plugin | Install command |
-|---|---|
-| research-superpowers | `/plugin` then pick `research-superpowers` from the marketplace list |
+| Plugin | Marketplace | Install |
+|---|---|---|
+| research-superpowers | `anthropic-plugin-directory` | `/plugin`, then pick it from the marketplace list |
+| vibe-wise | `vibe-wise` (github `nykooi1/vibe-wise`) | `claude plugin marketplace add nykooi1/vibe-wise` then `claude plugin enable vibe-wise@vibe-wise` |
+
+There is no `claude plugin install` subcommand. `marketplace add` plus `enable` is the
+non-interactive equivalent, and it writes the same two keys into `settings.json` that
+`/plugin install` does, so an agent CAN do it from the shell. Only the interactive
+`/plugin` browser needs a human.
 
 Note: `/plugin install superpowers@claude-plugins-official` fails with
 "Marketplace claude-plugins-official not found". Use the interactive `/plugin` browser
 instead. Installed on 2026-10-19; it adds the research skills and 7 research subagents.
+
+vibe-wise installed on 2026-10-21, version 0.1.44. It adds the `learn` and `reset`
+skills and a `SessionStart` hook that restores a project's `.vibe-wise/` notes. Run
+`/vibe-wise:learn` in a project to start. Auto-update is off by default for third-party
+marketplaces; refresh with `claude plugin marketplace update vibe-wise`.
 
 ## Account-synced skills (NOT tracked)
 

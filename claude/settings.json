@@ -52,7 +52,16 @@
     ]
   },
   "enabledPlugins": {
-    "research-superpowers@anthropic-plugin-directory": true
+    "research-superpowers@anthropic-plugin-directory": true,
+    "vibe-wise@vibe-wise": true
+  },
+  "extraKnownMarketplaces": {
+    "vibe-wise": {
+      "source": {
+        "source": "github",
+        "repo": "nykooi1/vibe-wise"
+      }
+    }
   },
   "modelSettings": {
     "claude-opus-5": {
