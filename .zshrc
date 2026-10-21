@@ -130,18 +130,4 @@ alias c="claude"
 # oh-my-zsh's lib/key-bindings.zsh runs `bindkey -e` and would undo it.
 bindkey -v
 
-# Esc delay. The default 40 means 400 ms, which makes leaving insert mode feel slow.
-# 1 means 10 ms. Anything lower breaks multi-key sequences such as the arrow keys.
-KEYTIMEOUT=1
-
-# `bindkey -v` switches to the `viins` keymap, which does not carry the emacs keys
-# over. Verified with `bindkey -M viins`: ^R became `redisplay`, and ^A, ^E and ^K
-# became `self-insert`, so they typed a control character instead of moving. Bind
-# them back. The arrow keys and history-substring-search need nothing, because
-# oh-my-zsh and that plugin bind `viins` and `vicmd` explicitly.
-bindkey -M viins '^R' history-incremental-search-backward
-bindkey -M viins '^A' beginning-of-line
-bindkey -M viins '^E' end-of-line
-bindkey -M viins '^K' kill-line
-
 alias gs="git status"
