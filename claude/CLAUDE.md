@@ -15,18 +15,35 @@ say which file in the repository you changed.
 - All work is authored by Mohammed Sohail only. Write commit messages and pull request
   text in his voice.
 
-## Never run git write commands (hard rule)
+## Never run git commands by default (hard rule)
 
-While a task runs, never run `git add`, `git commit`, `git push`, `git merge`,
-`git rebase`, `git tag`, `git reset` or any other command that writes history or the
-remote. Make the file changes only.
+By default, run no git command that changes anything: no `git add`, `git commit`,
+`git push`, `git merge`, `git rebase`, `git switch`, `git restore`, `git tag`,
+`git reset`, and no `gh` command that writes. Make the file changes only.
 
-When the task is done, print the exact commands for him to run himself. Print them in
-one copy-ready block, in order, with the real paths and the real commit message filled
-in. He runs them.
+Show him the commands in the chat instead. Print them in one copy-ready block, in
+order, with the real paths and the real commit message filled in. He runs them.
 
-This rule holds even when he says "and push it". Do the work, then hand over the
-commands.
+This holds even when he says "and push it", or asks a second time. Asking again is not
+permission. Hand over the commands again.
+
+Read-only inspection stays free at any time: `git --no-pager status --short`,
+`git --no-pager diff`, `git --no-pager log --oneline -10`, `git fetch`, `gh pr view`,
+`gh pr list`, `gh run view`, `gh issue list`.
+
+### The only way to get permission
+
+Run the commands only when he writes the exact words **"you have my explicit
+permission"**. Nothing else unlocks it: not "do it", not "go", not "push it yourself",
+not a repeated request.
+
+That permission covers the task in front of him at that moment. It does not carry over
+to the next task. When it is given:
+
+- Run the commands, then say exactly what was run and what landed on the remote.
+- Commits still carry his name only. The authorship rule above never changes.
+- Never `git push --force`. Never push to `upstream`. Never `gh pr merge`,
+  `gh pr create`, `gh release create` or `gh repo delete`.
 
 ## How to explain things (hard rule)
 
