@@ -1,7 +1,10 @@
 -- ============================================================================
 -- Neovim config. One file on purpose. Every line is explainable.
--- Plugin budget: 5 (see docs/superpowers/specs/2026-10-17-nvim-from-scratch-design.md)
--- Used: nui, noice, matteblack, fzf-lua, gitsigns = 5 of 5. Full.
+-- Scope: C++ only. No TypeScript, no web, no Python tooling.
+-- Plugins: nui, noice, matteblack, fzf-lua, gitsigns, nvim-treesitter,
+-- vim-dadbod, vim-dadbod-ui, competitest, nvim-dap = 10.
+-- The design doc still says "budget 5"; that budget is broken and the doc is
+-- stale (docs/superpowers/specs/2026-10-17-nvim-from-scratch-design.md).
 -- ============================================================================
 
 -- Leader must be set before any keymap that uses <leader>.
@@ -44,36 +47,56 @@ vim.pack.add({
 -- Neovim bundles only c, lua, markdown, query, vim and vimdoc grammars.
 -- `install` is async and does nothing if a parser is already there.
 -- Highlighting itself comes from Neovim, not the plugin, hence the autocmd.
+-- The list is taken from the two C++ repositories actually read on this
+-- machine: counts are `git ls-files` extension counts, so nothing here is
+-- guessed.
+--   llvm-project: .ll 48430  .cpp 39765  .h 17960  .c 14477  .s 13308
+--                 .mlir 3352  .py 3128  .td 1847  .cu 351
+--   ClickHouse:   .sql 13179  .cpp 5792  .h 5039  .sh 4767  .xml 3132
+--                 .py 2728  .cmake 139  .yml/.yaml 270  .proto 62
 local parsers = {
-  'cpp', 'c',                              -- C++ and its headers
-  'typescript', 'tsx', 'javascript',       -- Workers code
-  'json', 'jsonc',                         -- package.json, wrangler.jsonc, tsconfig
-  'toml',                                  -- wrangler.toml
-  'yaml',                                  -- CI, compose, k8s
-  'dockerfile',                            -- Dockerfile
-  'bash',                                  -- scripts, and `just` recipes
-  'sql',                                   -- D1 / database work
-  'lua',                                   -- this config
-  'markdown', 'markdown_inline',           -- READMEs, your design docs
-  'gitcommit', 'gitignore', 'diff',        -- commit messages and diffs
-  'html', 'css',                           -- templates and styles
+  -- The language itself. Headers (.h, .hpp) use the cpp parser too.
+  'cpp', 'c', 'cuda',
+
+  -- Compiler output you read while working on LLVM or tuning C++.
+  'llvm',                                  -- .ll, LLVM IR
+  'asm', 'nasm',                           -- .s hand-written and generated
+  'mlir',                                  -- .mlir
+  'tablegen',                              -- .td, LLVM's own DSL
+  'disassembly', 'objdump',                -- objdump / gdb disassembly output
+
+  -- Build systems. Both repositories are CMake.
+  'cmake', 'make', 'ninja',
+
+  -- The scripts around a C++ repository. Not optional: ClickHouse has 4767
+  -- shell scripts and 2728 Python ones, LLVM has 3128 Python.
+  'bash', 'python',
+
+  -- Data and config these two repositories are full of.
+  'sql',                                   -- ClickHouse tests and queries
+  'xml',                                   -- ClickHouse server config
+  'yaml', 'json', 'toml',
+  'proto',
+  'dockerfile',
+
+  -- Reading and writing about the code.
+  'markdown', 'markdown_inline',
+  'doxygen',                               -- /** */ blocks inside C++
+  'comment',                               -- TODO / FIXME
+
+  -- Git, which you are in all day.
+  'gitcommit', 'gitignore', 'git_config', 'git_rebase', 'diff',
+
+  -- Neovim itself, so this config and its help are highlighted.
+  'lua', 'vim', 'vimdoc', 'query',
   'regex',                                 -- noice recommends it
-  'python',                                -- 463 files across ClickHouse, linux, llvm
-  'rust',                                  -- 190 files in ClickHouse
-  'cmake', 'make',                         -- CMakeLists.txt and the kernel Makefile
-  'asm',                                   -- low-level-lab, and the old asm.lua
-  'vim', 'vimdoc', 'query',                -- nvim's own help and treesitter queries
-  'comment',                               -- TODO / FIXME inside comments
-  'terraform',                             -- the .tf files
-  'ssh_config',                            -- ~/.ssh/config
-  'xml',                                   -- svg, plist, pom
-  'printf', 'git_rebase',                  -- inside bash, and interactive rebase
+  'ssh_config', 'printf',
 }
 require('nvim-treesitter').install(parsers)
 
--- Filetype names and parser names are not the same word (a .tsx file has
--- filetype "typescriptreact", parser "tsx"), so try every filetype and let it
--- fail quietly when no parser exists.
+-- Filetype names and parser names are not the same word (a .sh file has
+-- filetype "sh", parser "bash"), so try every filetype and let it fail
+-- quietly when no parser exists.
 vim.api.nvim_create_autocmd('FileType', {
   group = vim.api.nvim_create_augroup('treesitter_start', { clear = true }),
   pattern = '*',
@@ -175,6 +198,7 @@ map('n', '[c', function() require('gitsigns').nav_hunk('prev') end,
 -- Defaults Neovim already gives us (`:help lsp-defaults`): K for hover,
 -- grn rename, gra code action, grr references, gri implementation,
 -- CTRL-] go to definition, and diagnostics shown automatically.
+-- clangd is the only server. It covers .c, .cpp, .h, .hpp and .cu.
 
 vim.lsp.config('clangd', {
   cmd = { 'clangd', '--background-index', '--clang-tidy' },
@@ -182,16 +206,7 @@ vim.lsp.config('clangd', {
   root_markers = { 'compile_commands.json', 'compile_flags.txt', '.git' },
 })
 
-vim.lsp.config('vtsls', {
-  cmd = { 'vtsls', '--stdio' },
-  filetypes = {
-    'javascript', 'javascriptreact',
-    'typescript', 'typescriptreact',
-  },
-  root_markers = { 'tsconfig.json', 'package.json', '.git' },
-})
-
-vim.lsp.enable({ 'clangd', 'vtsls' })
+vim.lsp.enable('clangd')
 
 -- Completion sourced from the running server, triggered as you type.
 vim.api.nvim_create_autocmd('LspAttach', {
@@ -295,6 +310,7 @@ dap.configurations.cpp = {
   },
 }
 dap.configurations.c = dap.configurations.cpp
+dap.configurations.cuda = dap.configurations.cpp
 
 -- Function keys, so nothing collides with the <leader> scheme.
 map('n', '<F5>', function() dap.continue() end, { desc = 'Debug: start / continue' })
