@@ -34,6 +34,10 @@ vim.pack.add({
   'https://github.com/lewis6991/gitsigns.nvim',
   -- The rewritten nvim-treesitter lives on the `main` branch and needs 0.12+.
   { src = 'https://github.com/nvim-treesitter/nvim-treesitter', version = 'main' },
+  'https://github.com/tpope/vim-dadbod',
+  'https://github.com/kristijanhusak/vim-dadbod-ui',
+  'https://github.com/xeluxee/competitest.nvim',
+  'https://github.com/mfussenegger/nvim-dap',
 })
 
 -- === Syntax (treesitter) ====================================================
@@ -213,3 +217,88 @@ vim.api.nvim_create_autocmd('BufWritePre', {
     vim.lsp.buf.format({ bufnr = ev.buf, timeout_ms = 2000 })
   end,
 })
+
+-- === Databases ==============================================================
+-- dadbod does not speak SSH. Open the tunnel in a terminal first:
+--   ssh -L 5433:db.internal:5432 -N user@bastion
+-- then point the URL at 127.0.0.1:5433 and it behaves like a local database.
+--
+-- Connections come from two places, neither of which is this file:
+--   1. environment variables  DATABASE_URL, DB_DEV_URL, DB_PROD_URL, DB_<NAME>_URL
+--   2. ~/.config/nvim/db-secrets.lua  - a real file in a real directory, NOT
+--      symlinked into the dotfiles repo, so a password cannot be committed:
+--        return {
+--          { name = 'tunnel', url = 'postgres://user:pass@127.0.0.1:5433/mydb' },
+--        }
+local function collect_dbs()
+  local dbs, seen = {}, {}
+  local function add(name, url)
+    if not url or url == '' or seen[name] then return end
+    seen[name] = true
+    dbs[#dbs + 1] = { name = name, url = url }
+  end
+
+  add(vim.env.DBUI_NAME or 'default', vim.env.DATABASE_URL or vim.env.DBUI_URL)
+  for key, value in pairs(vim.fn.environ()) do
+    local name = key:match('^DB_([%w_]+)_URL$')
+    if name then add(name:lower(), value) end
+  end
+
+  local ok, secrets = pcall(dofile, vim.fn.expand('~/.config/nvim/db-secrets.lua'))
+  if ok and type(secrets) == 'table' then
+    for _, conn in ipairs(secrets) do
+      if conn.name and conn.url then add(conn.name, conn.url) end
+    end
+  end
+
+  return dbs
+end
+
+local dbs = collect_dbs()
+if #dbs > 0 then vim.g.dbs = dbs end
+
+map('n', '<leader>D', '<cmd>DBUIToggle<cr>', { desc = 'Database browser' })
+
+-- === Competitive programming ================================================
+-- competitest reuses nui.nvim, already installed for noice.
+-- Testcases live beside the source: task-A.cpp -> task-A_input0.txt and
+-- task-A_output0.txt, counting from 0. No input.txt/output.txt by hand.
+-- `receive` needs the "competitive-companion" browser extension.
+require('competitest').setup({})
+
+map('n', '<leader>cr', '<cmd>CompetiTest run<cr>', { desc = 'Run all testcases' })
+map('n', '<leader>ca', '<cmd>CompetiTest add_testcase<cr>', { desc = 'Add a testcase' })
+map('n', '<leader>ce', '<cmd>CompetiTest edit_testcase<cr>', { desc = 'Edit a testcase' })
+map('n', '<leader>cp', '<cmd>CompetiTest receive problem<cr>', { desc = 'Pull problem from browser' })
+map('n', '<leader>cc', '<cmd>CompetiTest receive contest<cr>', { desc = 'Pull whole contest' })
+
+-- === Debugger ===============================================================
+-- gdb 17.2 speaks the Debug Adapter Protocol natively with `-i dap`, so there
+-- is nothing extra to install for C++.
+local dap = require('dap')
+
+dap.adapters.gdb = {
+  type = 'executable',
+  command = 'gdb',
+  args = { '--interpreter', 'dap' },
+}
+
+dap.configurations.cpp = {
+  {
+    name = 'Run this file',
+    type = 'gdb',
+    request = 'launch',
+    -- Debug the compiled binary sitting next to the source, minus the suffix.
+    program = function() return vim.fn.expand('%:p:r') end,
+    cwd = '${workspaceFolder}',
+    stopAtBeginningOfMainSubprogram = true,
+  },
+}
+dap.configurations.c = dap.configurations.cpp
+
+-- Function keys, so nothing collides with the <leader> scheme.
+map('n', '<F5>', function() dap.continue() end, { desc = 'Debug: start / continue' })
+map('n', '<F9>', function() dap.toggle_breakpoint() end, { desc = 'Debug: breakpoint' })
+map('n', '<F10>', function() dap.step_over() end, { desc = 'Debug: step over' })
+map('n', '<F11>', function() dap.step_into() end, { desc = 'Debug: step into' })
+map('n', '<F12>', function() dap.terminate() end, { desc = 'Debug: stop' })
