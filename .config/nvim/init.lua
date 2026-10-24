@@ -32,6 +32,38 @@ vim.pack.add({
   'https://github.com/tahayvr/matteblack.nvim',
   'https://github.com/ibhagwan/fzf-lua',
   'https://github.com/lewis6991/gitsigns.nvim',
+  -- The rewritten nvim-treesitter lives on the `main` branch and needs 0.12+.
+  { src = 'https://github.com/nvim-treesitter/nvim-treesitter', version = 'main' },
+})
+
+-- === Syntax (treesitter) ====================================================
+-- Neovim bundles only c, lua, markdown, query, vim and vimdoc grammars.
+-- `install` is async and does nothing if a parser is already there.
+-- Highlighting itself comes from Neovim, not the plugin, hence the autocmd.
+local parsers = {
+  'cpp', 'c',                              -- C++ and its headers
+  'typescript', 'tsx', 'javascript',       -- Workers code
+  'json', 'jsonc',                         -- package.json, wrangler.jsonc, tsconfig
+  'toml',                                  -- wrangler.toml
+  'yaml',                                  -- CI, compose, k8s
+  'dockerfile',                            -- Dockerfile
+  'bash',                                  -- scripts, and `just` recipes
+  'sql',                                   -- D1 / database work
+  'lua',                                   -- this config
+  'markdown', 'markdown_inline',           -- READMEs, your design docs
+  'gitcommit', 'gitignore', 'diff',        -- commit messages and diffs
+  'html', 'css',                           -- templates and styles
+  'regex',                                 -- noice recommends it
+}
+require('nvim-treesitter').install(parsers)
+
+-- Filetype names and parser names are not the same word (a .tsx file has
+-- filetype "typescriptreact", parser "tsx"), so try every filetype and let it
+-- fail quietly when no parser exists.
+vim.api.nvim_create_autocmd('FileType', {
+  group = vim.api.nvim_create_augroup('treesitter_start', { clear = true }),
+  pattern = '*',
+  callback = function() pcall(vim.treesitter.start) end,
 })
 
 -- === Colours ================================================================
