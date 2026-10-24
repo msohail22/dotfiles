@@ -133,8 +133,12 @@ Use modern command line tools instead of the classic ones:
 
 Rules for tools:
 
-- Never run an interactive tool. `fzf`, `htop`, `top`, `less`, `vim`, `nvim` and `man`
-  wait for a key press and the agent then hangs.
+- Never run an interactive tool. `fzf`, `htop`, `top`, `less`, `vim` and `man` wait for
+  a key press and the agent then hangs.
+- `nvim` is the one exception, and only as `nvim --headless -c '...' -c 'qa!'`. Headless
+  reads no keys and exits on its own, so it is the way to test the Neovim config: run a
+  Lua file with `-c 'luafile <path>'` and stub `vim.ui.input` when the code asks a
+  question. Plain `nvim <file>` still hangs; never run it.
 - Turn pagers off: `git --no-pager`, `bat --paging=never`, `PAGER=cat`.
 - Prefer machine-readable output. Use `--json` when a tool has it.
 - Check unfamiliar syntax with `tldr <tool>` before you guess.
