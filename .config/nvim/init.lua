@@ -288,6 +288,11 @@ require('competitest').setup({
   },
   -- Every received problem starts from this file instead of an empty buffer.
   template_file = { cpp = '~/Github/cp-setup/yo.cpp' },
+  -- The default path is "$(CWD)/$(PROBLEM).$(FEXT)", and $(PROBLEM) is the
+  -- raw title, so problem 4A lands in a file called "A. Watermelon.cpp".
+  -- The space and the dot make the compiled binary painful to run from a
+  -- shell. $(JAVA_TASK_CLASS) is the same name made identifier-safe.
+  received_problems_path = '$(CWD)/$(JAVA_TASK_CLASS).$(FEXT)',
 })
 
 map('n', '<leader>cr', '<cmd>CompetiTest run<cr>', { desc = 'Run all testcases' })
@@ -295,6 +300,83 @@ map('n', '<leader>ca', '<cmd>CompetiTest add_testcase<cr>', { desc = 'Add a test
 map('n', '<leader>ce', '<cmd>CompetiTest edit_testcase<cr>', { desc = 'Edit a testcase' })
 map('n', '<leader>cp', '<cmd>CompetiTest receive problem<cr>', { desc = 'Pull problem from browser' })
 map('n', '<leader>cc', '<cmd>CompetiTest receive contest<cr>', { desc = 'Pull whole contest' })
+
+-- --- Archiving a solved problem ---------------------------------------------
+-- Day to day the work happens in yo.cpp. <leader>cs files that buffer away
+-- under ~/Github/cp-setup/cf/ so nothing is copied by hand.
+--
+-- The rule, by what is already on disk:
+--
+--   nothing yet          ->  cf/Watermelon.cpp            (first solve)
+--   cf/Watermelon.cpp    ->  cf/Watermelon/solution-1.cpp (the old one, moved)
+--                            cf/Watermelon/solution-2.cpp (this one)
+--   cf/Watermelon/       ->  cf/Watermelon/solution-N.cpp (next free number)
+--
+-- So a second solution turns the file into a folder on its own, and every
+-- later solution just lands in it.
+local cf_dir = vim.fn.expand('~/Github/cp-setup/cf')
+
+-- "A. Watermelon.cpp" -> "A-Watermelon". Keeps the problem letter, because it
+-- sorts the folder in contest order, and drops everything a shell dislikes.
+local function slugify(name)
+  return (name
+    :gsub('%.%w+$', '')        -- strip the extension
+    :gsub('[^%w]+', '-')       -- anything not a letter or digit becomes a dash
+    :gsub('^%-+', '')
+    :gsub('%-+$', ''))
+end
+
+local function archive_solution()
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  local current = vim.fn.expand('%:t')
+  -- yo.cpp is the scratch pad, so its name says nothing about the problem.
+  local default = (current == '' or current == 'yo.cpp') and '' or slugify(current)
+
+  vim.ui.input({ prompt = 'Problem name: ', default = default }, function(answer)
+    if not answer or answer == '' then return end
+    local slug = slugify(answer)
+
+    local single = cf_dir .. '/' .. slug .. '.cpp'
+    local folder = cf_dir .. '/' .. slug
+    local target
+
+    -- Highest existing number plus one, never the count: deleting
+    -- solution-2 out of three must not make the next save overwrite
+    -- solution-3.
+    local function next_solution()
+      local highest = 0
+      for _, path in ipairs(vim.fn.glob(folder .. '/solution-*.cpp', false, true)) do
+        local n = tonumber(path:match('solution%-(%d+)%.cpp$'))
+        if n and n > highest then highest = n end
+      end
+      return folder .. '/solution-' .. (highest + 1) .. '.cpp'
+    end
+
+    if vim.fn.isdirectory(folder) == 1 then
+      target = next_solution()
+    elseif vim.fn.filereadable(single) == 1 then
+      vim.fn.mkdir(folder, 'p')
+      -- rename() returns non-zero on failure (`:help rename()`). Stop rather
+      -- than leave the old solution stranded outside its own folder.
+      if vim.fn.rename(single, folder .. '/solution-1.cpp') ~= 0 then
+        vim.notify('Could not move ' .. single .. ' into ' .. folder, vim.log.levels.ERROR)
+        return
+      end
+      target = folder .. '/solution-2.cpp'
+    else
+      vim.fn.mkdir(cf_dir, 'p')
+      target = single
+    end
+
+    if vim.fn.writefile(lines, target) == 0 then
+      vim.notify('Saved ' .. vim.fn.fnamemodify(target, ':~'), vim.log.levels.INFO)
+    else
+      vim.notify('Could not write ' .. target, vim.log.levels.ERROR)
+    end
+  end)
+end
+
+map('n', '<leader>cs', archive_solution, { desc = 'Save this solution to cf/' })
 
 -- === Debugger ===============================================================
 -- gdb 17.2 speaks the Debug Adapter Protocol natively with `-i dap`, so there
