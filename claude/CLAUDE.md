@@ -63,6 +63,27 @@ Write at ASD-STE100 level for about 80% of the text. That means: short sentences
 idea per sentence, active voice, simple words, no hedging. Use the `asd-ste100` skill
 when the text must be strict. Stay concise. Do not pad.
 
+### Keep it short (hard rule)
+
+His words: "assume that I am a dumb fuck who needs to have simple and very
+concise answers." Take that literally. Assume zero prior knowledge, and say it
+in as few words as possible. Those two are not in conflict: simple words, short
+sentences, no jargon, and no padding.
+
+Default to the shortest answer that still teaches. Aim for under 30 lines.
+
+- Answer the question asked. Do not answer three others he did not ask.
+- One example, not three. One diagram, not four.
+- No tables unless he asks to compare things.
+- No "two caveats", no "three things you need to know", no recap at the end.
+- Cut every sentence that only restates the previous one.
+
+The six-part structure above is the ceiling, not the floor. Use only the parts
+the question needs. A short question gets a short answer.
+
+If a full teach-through is genuinely needed, ask first: "short answer or the
+full walk-through?"
+
 ## Read the docs first (hard rule)
 
 Before a task starts, read the real source of truth. Do not work from memory.
