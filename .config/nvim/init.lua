@@ -54,6 +54,16 @@ local parsers = {
   'gitcommit', 'gitignore', 'diff',        -- commit messages and diffs
   'html', 'css',                           -- templates and styles
   'regex',                                 -- noice recommends it
+  'python',                                -- 463 files across ClickHouse, linux, llvm
+  'rust',                                  -- 190 files in ClickHouse
+  'cmake', 'make',                         -- CMakeLists.txt and the kernel Makefile
+  'asm',                                   -- low-level-lab, and the old asm.lua
+  'vim', 'vimdoc', 'query',                -- nvim's own help and treesitter queries
+  'comment',                               -- TODO / FIXME inside comments
+  'terraform',                             -- the .tf files
+  'ssh_config',                            -- ~/.ssh/config
+  'xml',                                   -- svg, plist, pom
+  'printf', 'git_rebase',                  -- inside bash, and interactive rebase
 }
 require('nvim-treesitter').install(parsers)
 

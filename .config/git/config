@@ -7,13 +7,44 @@
 	st = status
 
 [init]
-	defaultBranch = master
+	# All your repos use main, including this one.
+	defaultBranch = main
 
 [pull]
 	rebase = true
 
+[fetch]
+	# Delete local copies of branches that were deleted on the remote.
+	prune = true
+	pruneTags = true
+
+[rebase]
+	# Stash dirty work before a rebase and put it back after.
+	autoStash = true
+	# Honour "fixup!" and "squash!" commit messages automatically.
+	autoSquash = true
+	updateRefs = true
+
+[merge]
+	# zdiff3 shows the common ancestor in a conflict, not just both sides.
+	# Far easier to see who changed what.
+	conflictStyle = zdiff3
+
+[help]
+	# "git stats" -> runs "git status" after a short pause.
+	autocorrect = prompt
+
+[log]
+	date = iso
+
+[status]
+	# Show how many files are in an untracked directory, not just the dir.
+	showUntrackedFiles = all
+
 [push]
 	autoSetupRemote = true
+	# Push the tags that point at the commits being pushed.
+	followTags = true
 
 [core]
 	pager = delta
