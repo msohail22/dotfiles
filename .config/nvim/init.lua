@@ -279,7 +279,16 @@ map('n', '<leader>D', '<cmd>DBUIToggle<cr>', { desc = 'Database browser' })
 -- Testcases live beside the source: task-A.cpp -> task-A_input0.txt and
 -- task-A_output0.txt, counting from 0. No input.txt/output.txt by hand.
 -- `receive` needs the "competitive-companion" browser extension.
-require('competitest').setup({})
+-- The default compile command is `g++ -Wall $(FNAME) -o $(FNOEXT)`: no
+-- standard and no optimisation, so modern C++ fails to build and a correct
+-- solution can still time out. These flags match Codeforces GNU G++23.
+require('competitest').setup({
+  compile_command = {
+    cpp = { exec = 'g++', args = { '-std=c++23', '-O2', '-Wall', '$(FNAME)', '-o', '$(FNOEXT)' } },
+  },
+  -- Every received problem starts from this file instead of an empty buffer.
+  template_file = { cpp = '~/Github/cp-setup/yo.cpp' },
+})
 
 map('n', '<leader>cr', '<cmd>CompetiTest run<cr>', { desc = 'Run all testcases' })
 map('n', '<leader>ca', '<cmd>CompetiTest add_testcase<cr>', { desc = 'Add a testcase' })
