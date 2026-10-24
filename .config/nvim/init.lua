@@ -162,3 +162,12 @@ vim.api.nvim_create_autocmd('LspAttach', {
 map('n', '<leader>d', vim.diagnostic.open_float, { desc = 'Show this error' })
 map('n', ']d', function() vim.diagnostic.jump({ count = 1 }) end, { desc = 'Next error' })
 map('n', '[d', function() vim.diagnostic.jump({ count = -1 }) end, { desc = 'Previous error' })
+
+-- Format on save, using whichever language server is attached.
+-- No plugin: `:help vim.lsp.buf.format`.
+vim.api.nvim_create_autocmd('BufWritePre', {
+  group = vim.api.nvim_create_augroup('format_on_save', { clear = true }),
+  callback = function(ev)
+    vim.lsp.buf.format({ bufnr = ev.buf, timeout_ms = 2000 })
+  end,
+})
