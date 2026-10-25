@@ -5,3 +5,6 @@
 - [Explain by teaching, with diagrams](explain-by-teaching-with-diagrams.md) — assume zero knowledge, ASD-STE100, ASCII flow charts.
 - [Modern CLI tools over classic](modern-cli-tools-over-classic.md) — rg/fd/sd/jq/bat/eza; never interactive tools.
 - [Dotfiles is the source of truth](dotfiles-is-source-of-truth.md) — ~/.claude and tmux.conf are symlinks into ~/Github/dotfiles.
+- [ClickHouse: pull access only](clickhouse-pr-no-write-access.md) — cannot assign reviewers or labels; PRs move by maintainer self-assignment.
+- [Nvim config: one file, noice deferred](nvim-config-single-file-plan.md) — single init.lua; add noice only when he asks.
+- [Keep answers short](keep-answers-short.md) — under 30 lines; stop padding every reply.
