@@ -7,7 +7,7 @@ description: Use when drafting the daily tweets, writing up a merged PR, a Codef
 
 ## Overview
 
-One folder per day. Five files in it. Four are tweet drafts only. One — `learning-blog.md`
+One folder per day. Six files in it. Five are tweet drafts only. One — `learning-blog.md`
 — is the only thing that ever becomes a blog post on the site, and the only tweet that
 carries a URL.
 
@@ -20,6 +20,7 @@ blog-automation/
     ├── learning-blog.md      tweet + PUBLISHED to msohail22.github.io
     ├── codeforces.md         tweet only
     ├── low-level-lab.md      tweet only
+    ├── home-server.md        tweet only
     └── opinions.md           tweet only
 ```
 
@@ -47,7 +48,7 @@ Those are evidence, not output. Read them, then write the tweet into the real fi
 Some days have nothing. That is normal and it is not a failure.
 
 When `.raw-prs.md` and `.raw-codeforces.md` both report nothing, and Mohammed has not
-said what else he did, **write no tweet.** Leave the five files as frontmatter only with
+said what else he did, **write no tweet.** Leave the six files as frontmatter only with
 `status: draft`. Report "nothing to post today" and stop.
 
 "Daily" describes the cadence of *checking*, not a quota of tweets. There is no duty to
@@ -119,6 +120,10 @@ own `README.md` first. No handle found means hashtags only. A wrong @ tags a str
   Day boundaries are **local time (IST)**; jq's `strftime` is UTC, so never cross-check
   a date with it.
 - **`low-level-lab.md`** — `msohail22/low-level-lab` work. Own repo, so no project tag.
+- **`home-server.md`** — one change to the home server: what broke, what fixed it, what
+  the hardware is. The long-form record lives in `notes/home-server/`; this file is the
+  short public note drawn from it. No vendor is tagged unless Mohammed names one.
+  A blog post that grows out of this takes `lane: homelab`.
 - **`opinions.md`** — Mohammed's own take. Write nothing here unless he states the opinion.
   Do not generate opinions for him.
 
