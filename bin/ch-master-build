@@ -12,6 +12,9 @@
 set -euo pipefail
 
 CH_REPO="${CH_REPO:-$HOME/Github/ClickHouse}"
+# The remote that holds the real master. `origin` is the fork, and its
+# master is tens of thousands of commits behind, so it must not be used.
+CH_REMOTE="${CH_REMOTE:-upstream}"
 CH_WORKTREE="${CH_WORKTREE:-$HOME/Github/worktrees/latest-build}"
 CH_BRANCH="${CH_BRANCH:-latest-build}"
 CH_BUILD="${CH_BUILD:-$CH_WORKTREE/build_master}"
@@ -54,15 +57,34 @@ esac
 
 [ -d "$CH_REPO/.git" ] || die "no ClickHouse repository at $CH_REPO"
 [ -d "$CH_WORKTREE" ]  || die "no worktree at $CH_WORKTREE. Create it with:
-  git -C '$CH_REPO' worktree add -b '$CH_BRANCH' '$CH_WORKTREE' origin/master"
+  git -C '$CH_REPO' worktree add -b '' '' /master"
 
 # --- fetch; being offline is not a failure ------------------------------
-if ! git -C "$CH_REPO" fetch --quiet origin master 2>/dev/null; then
-  say "skip: cannot reach origin (offline?)"
+git -C "$CH_REPO" remote get-url "$CH_REMOTE" >/dev/null 2>&1 \
+  || die "no remote named '$CH_REMOTE' in $CH_REPO. Add it with:
+  git -C '$CH_REPO' remote add $CH_REMOTE https://github.com/ClickHouse/ClickHouse.git"
+
+if ! git -C "$CH_REPO" fetch --quiet "$CH_REMOTE" master 2>/dev/null; then
+  say "skip: cannot reach $CH_REMOTE (offline?)"
   exit 0
 fi
 
-new_sha=$(git -C "$CH_REPO" rev-parse origin/master)
+new_sha=$(git -C "$CH_REPO" rev-parse "$CH_REMOTE/master")
+
+# --- keep the main checkout's master on upstream ------------------------
+# Only ever a fast-forward, so this can neither rewrite history nor lose a
+# commit: when master has diverged or the tree is in the way, git refuses
+# and the build carries on regardless. Nothing here is pushed anywhere.
+head_ref=$(git -C "$CH_REPO" symbolic-ref --quiet --short HEAD || echo DETACHED)
+if [ "$head_ref" = master ]; then
+  if git -C "$CH_REPO" merge --ff-only --quiet "$CH_REMOTE/master" 2>/dev/null; then
+    say "main checkout: master fast-forwarded to ${new_sha:0:11}"
+  else
+    say "main checkout: master not fast-forwarded (diverged, or local changes in the way) - left alone"
+  fi
+else
+  say "main checkout: on '$head_ref', not master - left alone"
+fi
 old_sha=$(cat "$STAMP" 2>/dev/null || echo none)
 
 if [ "$new_sha" = "$old_sha" ] && [ -x "$CH_BUILD/programs/clickhouse" ]; then
