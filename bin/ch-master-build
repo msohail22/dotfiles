@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+# Keep a fresh Debug build of ClickHouse master on this laptop.
+#
+# It works only in the dedicated worktree at $CH_WORKTREE. The main
+# checkout is used read-only, to fetch, and never changes branch.
+#
+# WARNING: this worktree is disposable. Every run does `git reset --hard`
+# on its branch and on every submodule. Never keep work in it.
+#
+# Run by clickhouse-master-build.timer. Safe to run by hand at any time:
+# a lock file makes a hand run and a timer run take turns, not collide.
+set -euo pipefail
+
+CH_REPO="${CH_REPO:-$HOME/Github/ClickHouse}"
+CH_WORKTREE="${CH_WORKTREE:-$HOME/Github/worktrees/latest-build}"
+CH_BRANCH="${CH_BRANCH:-latest-build}"
+CH_BUILD="${CH_BUILD:-$CH_WORKTREE/build_master}"
+CH_OUT="${CH_OUT:-$HOME/.local/bin}"
+CH_MIN_FREE_GB="${CH_MIN_FREE_GB:-80}"
+CH_SUBMODULE_PROCS="${CH_SUBMODULE_PROCS:-8}"
+LOCK="${CH_LOCK:-${XDG_RUNTIME_DIR:-/tmp}/ch-master-build.lock}"
+
+STAMP="$CH_BUILD/.built-sha"
+LOG="$CH_BUILD/build.log"
+
+say() { printf '%s %s\n' "$(date +%Y-%m-%dT%H:%M:%S%z)" "$*"; }
+die() { say "ERROR: $*" >&2; exit 1; }
+
+# --- one build at a time ------------------------------------------------
+# systemd will not start a second service while one runs, but it cannot
+# stop you starting the script from a shell at the same time. Two ninjas
+# in one build directory corrupt it, so take an exclusive lock and give
+# up quietly if another run holds it.
+exec 9>"$LOCK"
+flock -n 9 || { say "skip: another build holds $LOCK"; exit 0; }
+
+# --- guard: mains power -------------------------------------------------
+# A ClickHouse build runs for hours. On battery it empties the laptop.
+if [ "${CH_ALLOW_BATTERY:-0}" != "1" ]; then
+  on_ac=0
+  for f in /sys/class/power_supply/A{C,DP}*/online; do
+    [ -r "$f" ] && [ "$(cat "$f")" = "1" ] && on_ac=1
+  done
+  [ "$on_ac" = "1" ] || { say "skip: on battery"; exit 0; }
+fi
+
+# --- guard: free disk ---------------------------------------------------
+free_gb=$(df -BG --output=avail "$HOME" 2>/dev/null | tail -1 | tr -dc '0-9')
+case "$free_gb" in
+  ''|*[!0-9]*) die "cannot read free space on $HOME" ;;
+esac
+[ "$free_gb" -ge "$CH_MIN_FREE_GB" ] \
+  || die "only ${free_gb}G free, need ${CH_MIN_FREE_GB}G. Reclaim with: ninja -C '$CH_BUILD' -t clean"
+
+[ -d "$CH_REPO/.git" ] || die "no ClickHouse repository at $CH_REPO"
+[ -d "$CH_WORKTREE" ]  || die "no worktree at $CH_WORKTREE. Create it with:
+  git -C '$CH_REPO' worktree add -b '$CH_BRANCH' '$CH_WORKTREE' origin/master"
+
+# --- fetch; being offline is not a failure ------------------------------
+if ! git -C "$CH_REPO" fetch --quiet origin master 2>/dev/null; then
+  say "skip: cannot reach origin (offline?)"
+  exit 0
+fi
+
+new_sha=$(git -C "$CH_REPO" rev-parse origin/master)
+old_sha=$(cat "$STAMP" 2>/dev/null || echo none)
+
+if [ "$new_sha" = "$old_sha" ] && [ -x "$CH_BUILD/programs/clickhouse" ]; then
+  say "skip: master unchanged at ${new_sha:0:11}"
+  exit 0
+fi
+say "building ${new_sha:0:11} (was ${old_sha:0:11})"
+
+# --- move the worktree to that commit -----------------------------------
+# reset, not switch: it keeps the branch name on the worktree and it also
+# throws away whatever the previous run left behind. update-submodules.sh
+# deletes third-party CMake files, which leaves submodules dirty, so they
+# are reset too or the next `submodule update` refuses to move them.
+git -C "$CH_WORKTREE" reset --hard --quiet "$new_sha"
+git -C "$CH_WORKTREE" submodule foreach --recursive --quiet 'git reset --hard --quiet || true'
+
+say "updating submodules"
+"$CH_WORKTREE/contrib/update-submodules.sh" --max-procs "$CH_SUBMODULE_PROCS"
+
+# --- ccache -------------------------------------------------------------
+# The worktree path differs from the main checkout, so without BASEDIR the
+# absolute paths baked into Debug info would differ and the cache from
+# your normal builds would never hit.
+export CCACHE_BASEDIR="$CH_WORKTREE"
+export CCACHE_COMPILERCHECK=content
+export CCACHE_SLOPPINESS=time_macros,include_file_mtime,include_file_ctime,file_macro,pch_defines,locale,system_headers
+
+# --- configure and build ------------------------------------------------
+# Debug, not RelWithDebInfo: cmake/limit_jobs.cmake records that a ThinLTO
+# link of the clickhouse binary needs about 100 GB of RAM. This machine
+# has 7 GB. Debug links without LTO and still gives a usable binary.
+#
+# No -j: cmake/limit_jobs.cmake derives the job count from physical RAM,
+# and the repository's own CLAUDE.md says not to pass -j to ninja.
+mkdir -p "$CH_BUILD"
+cmake -S "$CH_WORKTREE" -B "$CH_BUILD" -G Ninja \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_C_COMPILER=clang \
+  -DCMAKE_CXX_COMPILER=clang++ \
+  -DENABLE_TESTS=OFF
+
+say "ninja clickhouse -> $LOG"
+if ! ninja -C "$CH_BUILD" clickhouse > "$LOG" 2>&1; then
+  say "build FAILED. Last lines of $LOG:"
+  tail -30 "$LOG" >&2
+  say "the published binary at $CH_OUT/clickhouse-master is untouched"
+  exit 1
+fi
+
+# --- publish the binary, atomically -------------------------------------
+# The symlink only ever moves after a build that succeeded, so the binary
+# you get when you open the laptop is always one that built.
+mkdir -p "$CH_OUT"
+ln -sfn "$CH_BUILD/programs/clickhouse" "$CH_OUT/.clickhouse-master.new"
+mv -T "$CH_OUT/.clickhouse-master.new" "$CH_OUT/clickhouse-master"
+printf '%s\n' "$new_sha" > "$STAMP"
+
+say "done: $CH_OUT/clickhouse-master is ${new_sha:0:11}"
+ccache -s 2>/dev/null | rg -m1 'Hits:' || true

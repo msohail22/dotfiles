@@ -1,0 +1,26 @@
+[Unit]
+Description=Build ClickHouse master every 15 minutes
+Documentation=man:systemd.timer(5)
+
+[Timer]
+Unit=clickhouse-master-build.service
+
+# Every 15 minutes: :00, :15, :30, :45.
+OnCalendar=*:0/15
+
+# Also run 5 minutes after login, so the binary starts catching up as
+# soon as the laptop is open instead of waiting for the next tick.
+OnStartupSec=5min
+
+# If the laptop was asleep or off over a tick, run once on wake instead
+# of silently missing it.
+Persistent=true
+
+# Do not start exactly on the hour together with everything else.
+RandomizedDelaySec=2min
+
+# Let systemd move the start to a moment the machine is already busy.
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

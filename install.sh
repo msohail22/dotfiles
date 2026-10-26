@@ -24,6 +24,9 @@ echo "== symlinks =="
 link "$REPO/.zshrc"                  "$HOME/.zshrc"
 link "$REPO/.config/tmux/tmux.conf" "$HOME/.config/tmux/tmux.conf"
 link "$REPO/claude"                 "$HOME/.claude"
+link "$REPO/bin/ch-master-build"    "$HOME/.local/bin/ch-master-build"
+link "$REPO/systemd/user/clickhouse-master-build.service" "$HOME/.config/systemd/user/clickhouse-master-build.service"
+link "$REPO/systemd/user/clickhouse-master-build.timer"   "$HOME/.config/systemd/user/clickhouse-master-build.timer"
 
 echo
 echo "== command line tools =="
@@ -40,7 +43,17 @@ else
 fi
 
 echo
+echo "== 15-minute ClickHouse master build =="
+if command -v systemctl >/dev/null 2>&1; then
+  systemctl --user daemon-reload
+  systemctl --user enable --now clickhouse-master-build.timer
+  systemctl --user list-timers clickhouse-master-build.timer --no-pager
+fi
+
 echo "== left to do by hand =="
 echo "Log in to GitHub so git needs no SSH passphrase:  gh auth login"
 echo "Install plugins from inside Claude Code with:  /plugin"
 echo "See claude/MANIFEST.md for the full inventory."
+echo "Keep user timers running when logged out:  loginctl enable-linger $USER"
+echo "First ClickHouse master build is slow (7 GB RAM => 2 compile jobs)."
+echo "Watch it with:  journalctl --user -fu clickhouse-master-build.service"
