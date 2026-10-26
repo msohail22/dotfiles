@@ -1,0 +1,33 @@
+[Unit]
+Description=Build ClickHouse master in a dedicated worktree
+Documentation=https://clickhouse.com/docs/development/build
+# network-online.target does not exist in the user manager, so there is
+# nothing useful to order against here. The script treats an unreachable
+# origin as "skip this tick", not as a failure.
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/ch-master-build
+
+# The build must never make the laptop unusable. Lowest CPU and I/O
+# priority, and a hard cap on CPU weight, so the desktop always wins.
+Nice=19
+IOSchedulingClass=idle
+CPUSchedulingPolicy=batch
+CPUWeight=20
+IOWeight=20
+
+# A single build can run for many hours on this machine. systemd will not
+# start a second one while this one is active, so the 15-minute timer
+# naturally skips a tick instead of piling builds on top of each other.
+#
+# For Type=oneshot this is the only cap that works (RuntimeMaxSec= is
+# ignored for oneshot). 20 h is long enough for a cold build and still
+# kills a wedged one rather than letting it run into the next day.
+TimeoutStartSec=20h
+
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=CCACHE_DIR=%h/.cache/ccache
+
+[Install]
+WantedBy=default.target
