@@ -21,8 +21,34 @@ vim.g.maplocalleader = ' '
 vim.opt.number = true
 vim.opt.relativenumber = true
 
--- Suggestions appear as you type, no key press needed. `:help 'autocomplete'`
-vim.opt.autocomplete = true
+-- Completion. Two engines can auto-trigger on the same keystroke:
+--   'autocomplete'                  - Neovim's own, scans the 'complete' list
+--   vim.lsp.completion autotrigger  - clangd, fires on InsertCharPre
+-- C++ trigger characters are `.`, `->` and `::`, so in real code both run
+-- almost continuously. clangd's answers are the only useful ones here, so keep
+-- that engine (see LspAttach below) and leave Neovim's own off.
+-- `:help 'autocomplete'`, `:help lsp-completion`
+vim.opt.autocomplete = false
+
+-- 'complete' is what CTRL-N scans. The default is ".,w,b,u,t", and two of
+-- those touch the disk on every request:
+--   u = unloaded buffers in the buffer list
+--   t = tag completion, which reads a tags file
+-- The current buffer and the visible windows are enough; clangd covers the
+-- rest. `:help 'complete'`
+vim.opt.complete = '.,w,b'
+
+-- Only has an effect if 'autocomplete' is switched back on. The default is 0,
+-- which rebuilds the menu on every keypress. `:help 'autocompletedelay'`
+vim.opt.autocompletedelay = 100
+
+-- Builtin plugins that are never used here. Same list the old LazyVim config
+-- disabled; matchit, matchparen and netrw are deliberately left on.
+vim.g.loaded_gzip = 1
+vim.g.loaded_tarPlugin = 1
+vim.g.loaded_zipPlugin = 1
+vim.g.loaded_tutor = 1
+vim.g.loaded_tohtml = 1
 
 -- === Plugins ================================================================
 -- `vim.pack` is Neovim 0.12's built-in manager; it clones into
@@ -41,6 +67,54 @@ vim.pack.add({
   'https://github.com/kristijanhusak/vim-dadbod-ui',
   'https://github.com/xeluxee/competitest.nvim',
   'https://github.com/mfussenegger/nvim-dap',
+})
+
+-- === Big files ==============================================================
+-- Generated and vendored files defeat anything that parses the whole buffer.
+-- This is not hypothetical here: the extension counts below show llvm-project
+-- carries 48430 .ll files and ClickHouse 13179 .sql ones, and both repos hold
+-- single-line generated output. Two tests, the same pair the old LazyVim
+-- config inherited from snacks.nvim's bigfile module: total size, and average
+-- line length, which is what catches a minified one-line file.
+local bigfile_bytes = 1.5 * 1024 * 1024
+local bigfile_line_length = 1000
+
+local function is_bigfile(buf)
+  local name = vim.api.nvim_buf_get_name(buf)
+  if name == '' then return false end
+  local stat = vim.uv.fs_stat(name)
+  if not stat then return false end
+  if stat.size > bigfile_bytes then return true end
+  local lines = vim.api.nvim_buf_line_count(buf)
+  return lines > 0 and (stat.size / lines) > bigfile_line_length
+end
+
+-- Marked once per buffer, then read by the treesitter, LSP and format-on-save
+-- hooks below. BufReadPost, because the line count is only known once the
+-- file is in the buffer.
+vim.api.nvim_create_autocmd('BufReadPost', {
+  group = vim.api.nvim_create_augroup('bigfile', { clear = true }),
+  callback = function(args)
+    if not is_bigfile(args.buf) then return end
+    vim.b[args.buf].bigfile = true
+    vim.bo[args.buf].undofile = false
+    vim.wo.foldmethod = 'manual'
+    vim.wo.conceallevel = 0
+    -- Filetype detection runs after this autocmd and switches the regex
+    -- syntax engine back on, which is the expensive thing being avoided here.
+    -- Schedule the clear so it lands last. Checked with :setlocal syntax? on a
+    -- 3 MB file; without the schedule it reads "cpp".
+    vim.schedule(function()
+      if vim.api.nvim_buf_is_valid(args.buf) then
+        vim.bo[args.buf].syntax = ''
+      end
+    end)
+    vim.notify(
+      vim.fn.fnamemodify(vim.api.nvim_buf_get_name(args.buf), ':~:.')
+        .. ': big file, syntax and language features off',
+      vim.log.levels.WARN
+    )
+  end,
 })
 
 -- === Syntax (treesitter) ====================================================
@@ -100,7 +174,10 @@ require('nvim-treesitter').install(parsers)
 vim.api.nvim_create_autocmd('FileType', {
   group = vim.api.nvim_create_augroup('treesitter_start', { clear = true }),
   pattern = '*',
-  callback = function() pcall(vim.treesitter.start) end,
+  callback = function(args)
+    if vim.b[args.buf].bigfile then return end
+    pcall(vim.treesitter.start, args.buf)
+  end,
 })
 
 -- === Colours ================================================================
@@ -168,8 +245,22 @@ map('n', '<leader>h', '<cmd>FzfLua helptags<cr>', { desc = 'Search the help' })
 
 -- === Git ====================================================================
 -- Change marks in the sign column, plus VS Code style inline blame.
+--
+-- current_line_blame is OFF by default, and this is the single biggest speed
+-- decision in this file. Each time the cursor settles on a new line gitsigns
+-- runs `git blame` for that one line. Measured in ~/Github/ClickHouse:
+--
+--   git blame, one line, src/Access/AccessBackup.cpp:  654 ms (mean of 3)
+--
+-- With the 300 ms delay below that is roughly a second of work behind every
+-- cursor move, in exactly the repos this config exists for. The old LazyVim
+-- config had the same setting and the same problem, so it is not inherited
+-- wisdom, it is a measurement.
+--
+-- <leader>gB turns it on for the current session when the history is actually
+-- wanted, and <leader>gb blames one line on demand without any of the cost.
 require('gitsigns').setup({
-  current_line_blame = true,
+  current_line_blame = false,
   current_line_blame_opts = {
     virt_text = true,
     virt_text_pos = 'eol',
@@ -200,8 +291,23 @@ map('n', '[c', function() require('gitsigns').nav_hunk('prev') end,
 -- CTRL-] go to definition, and diagnostics shown automatically.
 -- clangd is the only server. It covers .c, .cpp, .h, .hpp and .cu.
 
+-- --clang-tidy is a second analysis pass on top of the normal one. It is only
+-- worth paying for when clangd knows the real compiler flags, which means a
+-- compile database. Neither ~/Github/ClickHouse nor a fresh llvm-project
+-- checkout has one, and without it clangd guesses the flags, so tidy spends
+-- the time and then reports on a translation unit it never parsed correctly.
+-- Generate one and it switches itself on:
+--   cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+--   ln -s build/compile_commands.json .
+-- Decided once, at startup, from the directory nvim was started in. Start nvim
+-- inside the repo you are working on, which is the normal way anyway.
+local clangd_cmd = { 'clangd', '--background-index' }
+if vim.fs.root(0, { 'compile_commands.json', 'compile_flags.txt' }) then
+  table.insert(clangd_cmd, '--clang-tidy')
+end
+
 vim.lsp.config('clangd', {
-  cmd = { 'clangd', '--background-index', '--clang-tidy' },
+  cmd = clangd_cmd,
   filetypes = { 'c', 'cpp', 'objc', 'objcpp', 'cuda' },
   root_markers = { 'compile_commands.json', 'compile_flags.txt', '.git' },
 })
@@ -212,6 +318,12 @@ vim.lsp.enable('clangd')
 vim.api.nvim_create_autocmd('LspAttach', {
   group = vim.api.nvim_create_augroup('lsp_completion', { clear = true }),
   callback = function(ev)
+    -- A big file is exactly what clangd is slowest on, and its answers there
+    -- are worth least. Send the server away rather than let it index.
+    if vim.b[ev.buf].bigfile then
+      vim.lsp.buf_detach_client(ev.buf, ev.data.client_id)
+      return
+    end
     local client = vim.lsp.get_client_by_id(ev.data.client_id)
     if client and client:supports_method('textDocument/completion') then
       vim.lsp.completion.enable(true, client.id, ev.buf, { autotrigger = true })
@@ -226,12 +338,31 @@ map('n', '[d', function() vim.diagnostic.jump({ count = -1 }) end, { desc = 'Pre
 
 -- Format on save, using whichever language server is attached.
 -- No plugin: `:help vim.lsp.buf.format`.
+--
+-- Off by default, which is what the old LazyVim config did with
+-- `vim.g.autoformat = false`. vim.lsp.buf.format is synchronous: it stops the
+-- editor until the server answers or the timeout runs out. With clangd busy
+-- building its background index, every `:w` froze for up to the full 2000 ms
+-- that used to be set here. 500 ms is enough for a server that is idle and
+-- short enough to not be felt when it is not.
+vim.g.autoformat = false
+
 vim.api.nvim_create_autocmd('BufWritePre', {
   group = vim.api.nvim_create_augroup('format_on_save', { clear = true }),
   callback = function(ev)
-    vim.lsp.buf.format({ bufnr = ev.buf, timeout_ms = 2000 })
+    if not vim.g.autoformat or vim.b[ev.buf].bigfile then return end
+    vim.lsp.buf.format({ bufnr = ev.buf, timeout_ms = 500 })
   end,
 })
+
+map('n', '<leader>F', function()
+  vim.lsp.buf.format({ timeout_ms = 2000 })
+end, { desc = 'Format this file now' })
+
+map('n', '<leader>tf', function()
+  vim.g.autoformat = not vim.g.autoformat
+  vim.notify('Format on save: ' .. (vim.g.autoformat and 'on' or 'off'))
+end, { desc = 'Toggle format on save' })
 
 -- === Databases ==============================================================
 -- dadbod does not speak SSH. Open the tunnel in a terminal first:
