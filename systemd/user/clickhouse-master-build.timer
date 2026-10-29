@@ -5,7 +5,8 @@ Documentation=man:systemd.timer(5)
 [Timer]
 Unit=clickhouse-master-build.service
 
-# Every 15 minutes: :00, :15, :30, :45.
+# Every 15 minutes: :00, :15, :30, :45. OnUnitInactiveSec=15min would
+# instead drift, because it counts from when the last build ENDED.
 OnCalendar=*:0/15
 
 # Also run 5 minutes after login, so the binary starts catching up as
@@ -16,11 +17,18 @@ OnStartupSec=5min
 # of silently missing it.
 Persistent=true
 
-# Do not start exactly on the hour together with everything else.
-RandomizedDelaySec=2min
+# After a build that overran several elapses, wait for the next scheduled
+# slot instead of firing again the instant it finishes. Without this, a
+# build ending at 23:07 starts another one at 23:07. Added in systemd 257;
+# this machine runs 261.
+DeferReactivation=yes
 
-# Let systemd move the start to a moment the machine is already busy.
-AccuracySec=1min
+# Land on the quarter hour. The default AccuracySec=1min spreads the start
+# over a minute-wide window to let the kernel coalesce wakeups, which is
+# worth it on a server with many timers. This is a single-user laptop with
+# one timer, so there is nothing to coalesce with, and no RandomizedDelaySec
+# either: nobody else is competing for the same instant.
+AccuracySec=1s
 
 [Install]
 WantedBy=timers.target

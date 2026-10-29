@@ -57,7 +57,7 @@ esac
 
 [ -d "$CH_REPO/.git" ] || die "no ClickHouse repository at $CH_REPO"
 [ -d "$CH_WORKTREE" ]  || die "no worktree at $CH_WORKTREE. Create it with:
-  git -C '$CH_REPO' worktree add -b '' '' /master"
+  git -C '$CH_REPO' worktree add -b '$CH_BRANCH' '$CH_WORKTREE' '$CH_REMOTE/master'"
 
 # --- fetch; being offline is not a failure ------------------------------
 git -C "$CH_REPO" remote get-url "$CH_REMOTE" >/dev/null 2>&1 \
@@ -116,6 +116,18 @@ export CCACHE_SLOPPINESS=time_macros,include_file_mtime,include_file_ctime,file_
 # Debug, not RelWithDebInfo: cmake/limit_jobs.cmake records that a ThinLTO
 # link of the clickhouse binary needs about 100 GB of RAM. This machine
 # has 7 GB. Debug links without LTO and still gives a usable binary.
+#
+# Note that ThinLTO is only enabled for RELWITHDEBINFO, so plain Release
+# would also link without it. Debug is still the right pick here, for a
+# different reason: it keeps assertions on, so a patch that breaks an
+# invariant throws where you can see it instead of running on quietly.
+# The cost is a slower, larger binary - fine for testing, not for
+# benchmarking. Use the Release tree in the main checkout for that.
+#
+# Consequence worth knowing: the main checkout builds Release, so this
+# Debug tree shares almost nothing with it in ccache. CCACHE_BASEDIR below
+# still matters, but it buys path-independence between runs OF THIS build,
+# not hits borrowed from your Release builds.
 #
 # No -j: cmake/limit_jobs.cmake derives the job count from physical RAM,
 # and the repository's own CLAUDE.md says not to pass -j to ninja.

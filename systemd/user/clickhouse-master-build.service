@@ -1,6 +1,7 @@
 [Unit]
 Description=Build ClickHouse master in a dedicated worktree
 Documentation=https://clickhouse.com/docs/development/build
+Documentation=file:%h/Github/dotfiles/systemd/README.md
 # network-online.target does not exist in the user manager, so there is
 # nothing useful to order against here. The script treats an unreachable
 # origin as "skip this tick", not as a failure.
@@ -9,13 +10,30 @@ Documentation=https://clickhouse.com/docs/development/build
 Type=oneshot
 ExecStart=%h/.local/bin/ch-master-build
 
-# The build must never make the laptop unusable. Lowest CPU and I/O
-# priority, and a hard cap on CPU weight, so the desktop always wins.
+# The build must never make the laptop unusable. Lowest CPU priority, so
+# the desktop always wins.
 Nice=19
-IOSchedulingClass=idle
 CPUSchedulingPolicy=batch
 CPUWeight=20
+
+# Honest note: these two do nothing on this machine. user@.service
+# delegates only cpu, memory and pids - not io - and the NVMe queue
+# scheduler is [none], so ioprio_set is ignored. Kept because they cost
+# nothing and would take effect on a machine that does delegate io.
+IOSchedulingClass=idle
 IOWeight=20
+
+# systemd-oomd is active on this user slice with
+# ManagedOOMMemoryPressure=auto. Without these three, memory pressure from
+# the build can get the editor killed instead of the build.
+#   MemoryHigh      a soft throttle, so the build slows instead of dying.
+#                   A hard MemoryMax would kill the linker outright.
+#   MemorySwapMax   stops the build thrashing all 14 GiB of swap and
+#                   freezing the desktop.
+#   OOMScoreAdjust  makes the build the first thing chosen, not the editor.
+MemoryHigh=3G
+MemorySwapMax=2G
+OOMScoreAdjust=1000
 
 # A single build can run for many hours on this machine. systemd will not
 # start a second one while this one is active, so the 15-minute timer
@@ -29,5 +47,6 @@ TimeoutStartSec=20h
 Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
 Environment=CCACHE_DIR=%h/.cache/ccache
 
-[Install]
-WantedBy=default.target
+# Deliberately no [Install] section. The timer is the only intended
+# trigger. With one, `systemctl --user enable clickhouse-master-build.service`
+# would start a build at every login, whatever the timer says.
