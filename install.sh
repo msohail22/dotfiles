@@ -25,6 +25,8 @@ link "$REPO/.zshrc"                  "$HOME/.zshrc"
 link "$REPO/.config/tmux/tmux.conf" "$HOME/.config/tmux/tmux.conf"
 link "$REPO/claude"                 "$HOME/.claude"
 link "$REPO/bin/ch-master-build"    "$HOME/.local/bin/ch-master-build"
+link "$REPO/.config/environment.d/ssh-agent.conf" "$HOME/.config/environment.d/ssh-agent.conf"
+link "$REPO/systemd/user/ssh-agent.service"              "$HOME/.config/systemd/user/ssh-agent.service"
 link "$REPO/systemd/user/clickhouse-master-build.service" "$HOME/.config/systemd/user/clickhouse-master-build.service"
 link "$REPO/systemd/user/clickhouse-master-build.timer"   "$HOME/.config/systemd/user/clickhouse-master-build.timer"
 

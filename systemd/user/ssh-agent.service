@@ -1,0 +1,23 @@
+[Unit]
+Description=SSH key agent
+Documentation=man:ssh-agent(1)
+
+[Service]
+Type=simple
+
+# The socket every SSH client looks for. %t is the systemd specifier for the
+# runtime directory, which is /run/user/<uid>. That directory is created at
+# login, lives in RAM, and is wiped at logout, so a stale socket can never
+# survive a reboot.
+Environment=SSH_AUTH_SOCK=%t/ssh-agent.socket
+
+# -D keeps ssh-agent in the foreground. Without it the agent forks and exits,
+# systemd sees the parent die and kills the whole unit. -a names the socket
+# instead of letting the agent pick a random path under /tmp, which is what
+# makes the fixed SSH_AUTH_SOCK above correct.
+ExecStart=/usr/bin/ssh-agent -D -a $SSH_AUTH_SOCK
+
+[Install]
+# default.target is the user session, so the agent starts at login. Keys are
+# held in memory only, so a restart always means typing the passphrase again.
+WantedBy=default.target
