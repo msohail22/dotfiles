@@ -26,7 +26,10 @@ IOWeight=20
 # kills a wedged one rather than letting it run into the next day.
 TimeoutStartSec=20h
 
-Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+# ~/.cargo/bin carries the rustup shims. ClickHouse pins a nightly Rust
+# toolchain for contrib/corrosion, so cmake fails at configure time when the
+# shims are not on PATH. A login shell has them; a systemd unit does not.
+Environment=PATH=%h/.cargo/bin:%h/.local/bin:/usr/local/bin:/usr/bin:/bin
 Environment=CCACHE_DIR=%h/.cache/ccache
 
 [Install]

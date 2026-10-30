@@ -20,6 +20,20 @@ CH_BRANCH="${CH_BRANCH:-latest-build}"
 CH_BUILD="${CH_BUILD:-$CH_WORKTREE/build_master}"
 CH_OUT="${CH_OUT:-$HOME/.local/bin}"
 CH_MIN_FREE_GB="${CH_MIN_FREE_GB:-80}"
+# Arch ships an unversioned `clang`. Debian ships only `clang-22` and friends,
+# with no unversioned alias, so a hardcoded `clang` fails there. Prefer the
+# plain name, else take the highest versioned one that is actually installed.
+pick_clang() {
+  local base="$1" c
+  command -v "$base" >/dev/null 2>&1 && { echo "$base"; return; }
+  for c in $(compgen -c "$base-" | sort -t- -k2 -n -r); do
+    case "$c" in
+      "$base"-[0-9]*) command -v "$c" >/dev/null 2>&1 && { echo "$c"; return; } ;;
+    esac
+  done
+}
+CH_CC="${CH_CC:-$(pick_clang clang)}"
+CH_CXX="${CH_CXX:-$(pick_clang clang++)}"
 CH_SUBMODULE_PROCS="${CH_SUBMODULE_PROCS:-8}"
 LOCK="${CH_LOCK:-${XDG_RUNTIME_DIR:-/tmp}/ch-master-build.lock}"
 
@@ -54,6 +68,9 @@ case "$free_gb" in
 esac
 [ "$free_gb" -ge "$CH_MIN_FREE_GB" ] \
   || die "only ${free_gb}G free, need ${CH_MIN_FREE_GB}G. Reclaim with: ninja -C '$CH_BUILD' -t clean"
+
+[ -n "$CH_CC" ]  || die "no clang found. Install clang (Arch) or clang-<N> (Debian)."
+[ -n "$CH_CXX" ] || die "no clang++ found. Install clang (Arch) or clang-<N> (Debian)."
 
 [ -d "$CH_REPO/.git" ] || die "no ClickHouse repository at $CH_REPO"
 [ -d "$CH_WORKTREE" ]  || die "no worktree at $CH_WORKTREE. Create it with:
@@ -122,8 +139,8 @@ export CCACHE_SLOPPINESS=time_macros,include_file_mtime,include_file_ctime,file_
 mkdir -p "$CH_BUILD"
 cmake -S "$CH_WORKTREE" -B "$CH_BUILD" -G Ninja \
   -DCMAKE_BUILD_TYPE=Debug \
-  -DCMAKE_C_COMPILER=clang \
-  -DCMAKE_CXX_COMPILER=clang++ \
+  -DCMAKE_C_COMPILER="$CH_CC" \
+  -DCMAKE_CXX_COMPILER="$CH_CXX" \
   -DENABLE_TESTS=OFF
 
 say "ninja clickhouse -> $LOG"
