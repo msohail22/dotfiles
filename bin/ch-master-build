@@ -74,7 +74,7 @@ esac
 
 [ -d "$CH_REPO/.git" ] || die "no ClickHouse repository at $CH_REPO"
 [ -d "$CH_WORKTREE" ]  || die "no worktree at $CH_WORKTREE. Create it with:
-  git -C '$CH_REPO' worktree add -b '' '' /master"
+  git -C '$CH_REPO' worktree add -b '$CH_BRANCH' '$CH_WORKTREE' '$CH_REMOTE/master'"
 
 # --- fetch; being offline is not a failure ------------------------------
 git -C "$CH_REPO" remote get-url "$CH_REMOTE" >/dev/null 2>&1 \
