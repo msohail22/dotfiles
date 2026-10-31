@@ -423,7 +423,13 @@ require('competitest').setup({
   -- raw title, so problem 4A lands in a file called "A. Watermelon.cpp".
   -- The space and the dot make the compiled binary painful to run from a
   -- shell. $(JAVA_TASK_CLASS) is the same name made identifier-safe.
-  received_problems_path = '$(CWD)/$(JAVA_TASK_CLASS).$(FEXT)',
+  --
+  -- Competitive Companion sends problems from any judge it supports, not only
+  -- Codeforces, and every judge names its first problem "A". Without the
+  -- $(JUDGE)/$(CONTEST) prefix an AtCoder A.cpp overwrites a Codeforces one.
+  -- $(JUDGE) is the first part of the extension's `group` field.
+  received_problems_path = '$(CWD)/$(JUDGE)/$(CONTEST)/$(JAVA_TASK_CLASS).$(FEXT)',
+  received_contests_directory = '$(CWD)/$(JUDGE)/$(CONTEST)',
 })
 
 map('n', '<leader>cr', '<cmd>CompetiTest run<cr>', { desc = 'Run all testcases' })
@@ -434,18 +440,21 @@ map('n', '<leader>cc', '<cmd>CompetiTest receive contest<cr>', { desc = 'Pull wh
 
 -- --- Archiving a solved problem ---------------------------------------------
 -- Day to day the work happens in yo.cpp. <leader>cs files that buffer away
--- under ~/Github/cp-setup/cf/ so nothing is copied by hand.
+-- under ~/Github/cp-setup/solved/<judge>/ so nothing is copied by hand.
+-- The folder is "solved", not "cf": Competitive Companion feeds this setup
+-- from any judge, so a Codeforces-only name would be a lie.
 --
--- The rule, by what is already on disk:
+-- The rule, by what is already on disk (judge Codeforces shown):
 --
---   nothing yet          ->  cf/Watermelon.cpp            (first solve)
---   cf/Watermelon.cpp    ->  cf/Watermelon/solution-1.cpp (the old one, moved)
---                            cf/Watermelon/solution-2.cpp (this one)
---   cf/Watermelon/       ->  cf/Watermelon/solution-N.cpp (next free number)
+--   nothing yet        ->  solved/Codeforces/A-Watermelon.cpp
+--   that file exists   ->  solved/Codeforces/A-Watermelon/solution-1.cpp (moved)
+--                          solved/Codeforces/A-Watermelon/solution-2.cpp (this one)
+--   that folder exists ->  solved/Codeforces/A-Watermelon/solution-N.cpp
 --
 -- So a second solution turns the file into a folder on its own, and every
 -- later solution just lands in it.
-local cf_dir = vim.fn.expand('~/Github/cp-setup/cf')
+local solved_dir = vim.fn.expand('~/Github/cp-setup/solved')
+local default_judge = 'Codeforces'
 
 -- "A. Watermelon.cpp" -> "A-Watermelon". Keeps the problem letter, because it
 -- sorts the folder in contest order, and drops everything a shell dislikes.
@@ -457,18 +466,37 @@ local function slugify(name)
     :gsub('%-+$', ''))
 end
 
+-- A received problem sits at cp-setup/<Judge>/<Contest>/A.cpp, so the judge is
+-- the first path part under cp-setup. yo.cpp sits at the root and says nothing,
+-- so that case falls back to default_judge and the prompt can be edited.
+local function judge_of_buffer()
+  local full = vim.fn.expand('%:p')
+  local root = vim.fn.expand('~/Github/cp-setup') .. '/'
+  local rest = full:sub(1, #root) == root and full:sub(#root + 1) or ''
+  local first = rest:match('^([^/]+)/')
+  return first or default_judge
+end
+
 local function archive_solution()
   local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
   local current = vim.fn.expand('%:t')
   -- yo.cpp is the scratch pad, so its name says nothing about the problem.
-  local default = (current == '' or current == 'yo.cpp') and '' or slugify(current)
+  local name = (current == '' or current == 'yo.cpp') and '' or slugify(current)
+  -- One prompt, not two: the judge is part of the answer and is pre-filled.
+  local default = judge_of_buffer() .. '/' .. name
 
-  vim.ui.input({ prompt = 'Problem name: ', default = default }, function(answer)
+  vim.ui.input({ prompt = 'Judge/problem: ', default = default }, function(answer)
     if not answer or answer == '' then return end
-    local slug = slugify(answer)
+    local judge, problem = answer:match('^(.-)/(.*)$')
+    if not judge or judge == '' or problem == '' then
+      vim.notify('Write it as Judge/problem, for example Codeforces/A-Watermelon', vim.log.levels.ERROR)
+      return
+    end
+    local slug = slugify(problem)
+    local judge_dir = solved_dir .. '/' .. slugify(judge)
 
-    local single = cf_dir .. '/' .. slug .. '.cpp'
-    local folder = cf_dir .. '/' .. slug
+    local single = judge_dir .. '/' .. slug .. '.cpp'
+    local folder = judge_dir .. '/' .. slug
     local target
 
     -- Highest existing number plus one, never the count: deleting
@@ -495,7 +523,7 @@ local function archive_solution()
       end
       target = folder .. '/solution-2.cpp'
     else
-      vim.fn.mkdir(cf_dir, 'p')
+      vim.fn.mkdir(judge_dir, 'p')
       target = single
     end
 
@@ -507,7 +535,7 @@ local function archive_solution()
   end)
 end
 
-map('n', '<leader>cs', archive_solution, { desc = 'Save this solution to cf/' })
+map('n', '<leader>cs', archive_solution, { desc = 'Save this solution to solved/' })
 
 -- === Debugger ===============================================================
 -- gdb 17.2 speaks the Debug Adapter Protocol natively with `-i dap`, so there
