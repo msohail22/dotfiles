@@ -23,6 +23,7 @@ link() {
 echo "== symlinks =="
 link "$REPO/.zshrc"                  "$HOME/.zshrc"
 link "$REPO/.config/tmux/tmux.conf" "$HOME/.config/tmux/tmux.conf"
+link "$REPO/.config/tmux/status-right.sh" "$HOME/.config/tmux/status-right.sh"
 link "$REPO/claude"                 "$HOME/.claude"
 link "$REPO/bin/ch-master-build"    "$HOME/.local/bin/ch-master-build"
 link "$REPO/.ssh/config"            "$HOME/.ssh/config"
