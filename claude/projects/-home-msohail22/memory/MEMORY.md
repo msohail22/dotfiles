@@ -6,5 +6,6 @@
 - [Modern CLI tools over classic](modern-cli-tools-over-classic.md) — rg/fd/sd/jq/bat/eza; never interactive tools.
 - [Dotfiles is the source of truth](dotfiles-is-source-of-truth.md) — ~/.claude and tmux.conf are symlinks into ~/Github/dotfiles.
 - [ClickHouse: pull access only](clickhouse-pr-no-write-access.md) — cannot assign reviewers or labels; PRs move by maintainer self-assignment.
-- [Nvim config: one file, noice deferred](nvim-config-single-file-plan.md) — single init.lua; add noice only when he asks.
+- [Nvim: Omarchy LazyVim](nvim-config-single-file-plan.md) — replaced the single init.lua; pain gate on plugins still holds.
 - [Keep answers short](keep-answers-short.md) — under 30 lines; stop padding every reply.
+- [ccache build config needs review](ccache-build-config-needs-review.md) — he approved it on trust; remind him to study it.

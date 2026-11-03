@@ -1,24 +1,26 @@
 ---
 name: nvim-config-single-file-plan
-description: Nvim config stays one init.lua; noice.nvim agreed but deferred.
+description: Nvim config is Omarchy's LazyVim since 2026-10-31; the pain gate on new plugins still holds.
 metadata:
   type: project
 ---
 
-Nvim config (`~/Github/dotfiles/.config/nvim/init.lua`, symlinked as the file
-only into `~/.config/nvim`) is to stay a **single file**. No `lua/` module split
-unless he asks. Decided 2026-10-24.
+Nvim config is **Omarchy's LazyVim**, taken from the `omarchy-nvim` Arch package
+(`/usr/share/omarchy-nvim/config`, not the `basecamp/omarchy` repo — that repo no
+longer carries `config/nvim`). It lives in `~/Github/dotfiles/.config/nvim/` and
+is symlinked into `~/.config/nvim` per top-level entry, with `lua/` linked as a
+whole directory. Replaced the 591-line hand-written `vim.pack` config on
+2026-10-31; that old single-file plan is void.
 
-`noice.nvim` is agreed as the next plugin — to move the `:` cmdline off the
-bottom of the screen (`views.cmdline_popup.position.row`). **Do not add it until
-he says so.** Deferred 2026-10-24.
+`lua/plugins/competitest.lua` carries the competitive programming setup:
+Codeforces-matching `g++ -std=c++23 -O2 -Wall`, the `yo.cpp` template,
+`$(JUDGE)/$(CONTEST)` receive paths, and `<leader>cs` to archive a solution
+under `~/Github/cp-setup/solved/<judge>/`.
 
-He declined the usual starter options (ignorecase, expandtab, undofile,
-scrolloff, etc.). Only `number` + `relativenumber` are set.
+**Why:** the hand-written config was more upkeep than it was worth. But the
+**pain gate from his design doc still stands**: a plugin or option is added only
+after he has hit the problem himself.
 
-**Why:** his design doc at `~/.config/nvim/docs/superpowers/specs/` sets a
-plugin budget of 5 and a "pain gate" — a plugin is added only after he has hit
-the problem himself. Pre-emptive config is unwelcome.
-
-**How to apply:** propose, explain, then wait. Never add nvim options or plugins
-on your own initiative. See [[dotfiles-is-source-of-truth]].
+**How to apply:** propose, explain, then wait for his word. Never add plugins or
+options on your own initiative, LazyVim extras included. Edit the dotfiles copy,
+never `~/.config/nvim`. See [[dotfiles-is-source-of-truth]].
