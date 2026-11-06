@@ -1,0 +1,41 @@
+# Global clangd configuration.
+# Linked to ~/.config/clangd/config.yaml by install.sh.
+#
+# Why this file exists:
+#   Competitive programming files use #include <bits/stdc++.h>. A 26-line
+#   solution becomes a 137,278-line translation unit. With no flags at all,
+#   clangd guessed the language standard, failed, and logged
+#   "Indexed c++17 standard library (incomplete due to errors)". A failed
+#   index is never cached, so clangd re-parsed those 137k lines on every
+#   edit. One parse measured 973 ms with hyperfine.
+#
+# Naming the standard lets the index complete once and be reused.
+
+CompileFlags:
+  # Applied when there is no compile_commands.json, which is every
+  # single-file CP solution.
+  Add:
+    - -std=c++17
+    - -Wall
+
+Index:
+  # Build the project index in a background thread and cache it on disk
+  # under ~/.cache/clangd. The second session costs nothing.
+  Background: Build
+  StandardLibrary: Yes
+
+Diagnostics:
+  # clang-tidy walks the whole AST again after every parse. On a 137k-line
+  # translation unit that roughly doubles the cost, to catch style issues
+  # that do not matter in a contest.
+  ClangTidy:
+    Remove:
+      - readability-*
+      - modernize-*
+      - bugprone-easily-swappable-parameters
+
+InlayHints:
+  # Hints are recomputed on every change. Keep the useful one, drop the rest.
+  Enabled: Yes
+  ParameterNames: No
+  DeducedTypes: No
