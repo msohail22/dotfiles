@@ -186,3 +186,87 @@ Other git rules:
 - `gh` write commands follow the same rule as git: do not run `gh pr create`,
   `gh pr merge`, `gh release create` or `gh repo delete`. Print them for him.
 - Read-only `gh` is fine: `gh pr view`, `gh pr list`, `gh run view`, `gh issue list`.
+
+## The low-level-lab project: keep a learning log (hard rule)
+
+This applies in `~/Github/low-level-lab`.
+
+It used to say `~/Github/arrakis` and `~/Github/quarantine`. Both repositories
+were ported into `low-level-lab` on 2026-11-09 and the paths changed with them.
+
+`~/Github/low-level-lab/docs/arrakis/learning.md` is the log of the whole
+project. Keep it current.
+Write to it **in the same reply** that does the work. Do not wait to be asked,
+and do not save it for the end of the session.
+
+Record five things. Each one has a fixed place in the file.
+
+| What | Where in learning.md |
+|---|---|
+| A question he asked, and the answer | Section 2, as the next `### Qn.` |
+| A decision, with the date and the reason | Section 1, as the next `Dn` row |
+| A command that was run, and what it means | Section 3, under the right job heading |
+| A blocker found | Section 4, as the next `Bn` row |
+| A blocker fixed | Section 4: strike the row through, write FIXED, the date, and the proof |
+
+Rules for each entry:
+
+- **Answers** keep the diagram and the everyday comparison from the chat reply.
+  The log must teach on its own, with no chat to read beside it.
+- **Commands** get a line that says what the command means and why that command
+  and not another one. Explain the flags. Explain `tee` instead of `>`, `reload`
+  instead of `restart`, and so on.
+- **Decisions** carry a date and a reason. A decision with no reason is a note,
+  not a decision.
+- Number entries in order and never reuse a number. A wrong entry is struck
+  through, not deleted.
+- Say "recorded in learning.md" at the end of the reply, so he knows it landed.
+
+Two files, two jobs. Do not mix them.
+
+- `docs/plan.md` is the **current state**: what is true now, what to do next.
+- `docs/arrakis/learning.md` is the **history**: how we got here and why.
+
+A third file, `docs/todo-later.md`, is the parking lot: agreed but not started.
+An item leaves it only by moving into `plan.md` with a decision row behind it.
+
+**`docs/` is gitignored and untracked, on purpose.** Three consequences:
+
+1. These notes exist on one machine. There is no remote copy, so nothing in
+   them is recoverable from GitHub.
+2. Nothing public may link into `docs/`. A `docs/<file>` reference in the
+   README, in `SECURITY.md` or in an issue template is a 404 for everyone
+   else. Images the README needs live in `.github/assets/`.
+3. "Commit the learning log" is never part of a handover block. It cannot be
+   committed.
+
+Never write a measured number into either file from memory. Measure it, then
+write the number with the date it was measured.
+
+If he asks "are you recording this?", the answer must be yes. Check before
+answering, and if something is missing, add it first and say what was missing.
+
+### Every fact needs the command that produced it
+
+In `learning.md`, a fact that influenced a decision must carry its evidence.
+Write the command that produced it, next to it. A fact with no command is a
+guess, and must be marked as a guess.
+
+This applies to corrections too. When a stated fact turns out to be wrong,
+record all three parts:
+
+1. The wrong claim, and that it came from memory and not from a measurement.
+2. The command that exposed the contradiction.
+3. The command that found the correct answer, and why that command is the
+   authoritative one.
+
+Then say whether any decision rested on the wrong fact, and whether the decision
+changes. Strike the wrong entry through. Never delete it.
+
+Explain the flags. `lspci -nnk` is not "list PCI devices" — `-nn` gives the
+numeric ID so there is no guessing, and `-k` names the driver actually bound to
+the device. The flag is usually the reason that command was chosen.
+
+Record commands that **failed or misled** as well. A command that looks like
+confirmation but is not is worth more than one that works: `modinfo -F name
+iwlwifi` prints `iwlwifi` on every Debian machine, whatever card is fitted.
