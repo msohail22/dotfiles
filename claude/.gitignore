@@ -18,6 +18,8 @@ skills/*
 !skills/daily-content/
 !skills/daily-content/**
 !skills/llm-council/**
+!skills/socratic-tutor/
+!skills/socratic-tutor/**
 
 # Memory: the rule files, but NOT the conversation transcripts next to them
 !projects/
