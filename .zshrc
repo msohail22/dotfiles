@@ -148,4 +148,4 @@ w() {
 }
 
 alias kw="tmux kill-session -t work"
-alias cp="clang++ /home/msohail22/Github/cp-setup/yo.cpp -o yo"
+alias cy="g++ -std=c++23 -O2 -Wall -DLOCAL /home/msohail22/Github/cp-setup/yo.cpp -o yo"
