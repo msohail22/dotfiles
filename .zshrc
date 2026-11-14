@@ -132,20 +132,4 @@ bindkey -v
 
 alias gs="git status"
 
-# Attach to the "work" tmux session. Build it with the four standard windows
-# the first time. `has-session` is the test; `-d` keeps the build detached so
-# every window is created before the terminal attaches.
-w() {
-  if ! tmux has-session -t work 2>/dev/null; then
-    tmux new-session  -d -s work -n terminal
-    # `exec zsh` keeps the window alive after claude exits, instead of closing it.
-    tmux new-window   -d -t work -n claude "claude; exec zsh"
-    tmux new-window   -d -t work -n nvim
-    tmux new-window   -d -t work -n server
-    tmux select-window -t work:1
-  fi
-  tmux attach-session -t work
-}
-
-alias kw="tmux kill-session -t work"
 alias cy="g++ -std=c++23 -O2 -Wall -DLOCAL /home/msohail22/Github/cp-setup/yo.cpp -o yo"
