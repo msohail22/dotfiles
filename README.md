@@ -5,13 +5,14 @@ Configuration for Arch / Omarchy. Two things live here:
 | Path in repository | Symlinked to | What it is |
 |---|---|---|
 | `.config/tmux/tmux.conf` | `~/.config/tmux/tmux.conf` | tmux configuration |
+| `.config/ghostty/config` | `~/.config/ghostty/config` | Ghostty terminal configuration |
 | `claude/` | `~/.claude` | Claude Code configuration (whole folder) |
 | `.zshrc` | `~/.zshrc` | zsh configuration |
 
 ## Rule
 
-Edit the files **in this repository**. Never edit through `~/.claude` or
-`~/.config/tmux`. Those paths are symlinks into this repository, so a change through
+Edit the files **in this repository**. Never edit through `~/.claude`,
+`~/.config/tmux` or `~/.config/ghostty`. Those paths are symlinks into this repository, so a change through
 them edits the same bytes, but the repository is the source of truth and the place that
 gets committed.
 
